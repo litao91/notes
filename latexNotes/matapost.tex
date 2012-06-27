@@ -1,0 +1,71 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage{parskip}
+\topmargin -1.5cm
+\oddsidemargin -0.04cm
+\evensidemargin -0.04cm
+\textwidth 16.59cm
+\textheight 25cm
+
+\author{LI Tao}
+\title{Metapost Notes}
+\begin{document}
+\section{Basic Drawing Statements}
+\begin{tabbing}
+Drawing a Line:\hspace{1cm}\= \verb|draw (20,20)--(0,0)|\\
+Draws a diagnal line:\>\verb|draw (20,20)--(0,0)--(0,30)--(30,0)--(0,0)|\\
+Draw a single point:\>\verb|drawdot (30,0)|\\
+Own scale factor, say $u$:\> $u=1cm$\\
+Settign line width:\>\verb|pickup pencircle scaled 4pt|\\
+\end{tabbing}
+The default coordinate system:for coordinates like $(30,0)$, it means that it is 30 units to the right of the origin, where a unit is $\frac{1}{72}$ inch.
+\paragraph{Examples}
+\begin{verbatim}
+for i=0 upto 2:
+    for j=0 upto2: drawdot(i*u,j*u); endfor
+endfor
+\end{verbatim}
+The result is a three-by-three grid of bold dots.
+\section{The MetaPost Workflow}
+A stand-alone MetaPost compiler:\verb|mpost|.
+
+The executable is actual a small wrapper program around \emph{mplib}, a library containing the MetaPost compiler.
+
+Creating graphics with MetaPost follows the \emph{edit-compile-debug} paradigm.
+
+To create a graphics with MetaPost, you prepare a text file containing code in the MetaPost language and then invoke the compiler, usually by giving a command of the form:\verb|mpost <input file>|
+
+The file usually have names ending \verb|.mp|
+
+Any terminal I/O during compilation, MetaPost ouptputs \verb|<job-name>.log|
+
+If all goes well during compilation, MetaPost outputs one or more graphics files in a variant of the PostScript format, by defaut.
+
+A MetaPost input file normally containts a sequence of \verb|beginfig()| , \verb|endfig| pairs with an end statement\footnote{Omitting the final end statement causes to enver interactive mode after processing the input files}. These are macros that perform various administrative functions and ensure that the result of all drawing operations get packaged up and translated into PostScript or SVG format.
+
+Assignments to internal variables:
+\begin{verbatim}
+prologus:=3;
+outputtemplate:="%j-%c.mps";
+outputformat:="svg";
+\end{verbatim}
+If your graphics contain text labels, you might want to set variable proloues to 3 to make sure the correct fonts are used under all possible circustances.
+
+The second assignment changes the output file name scheme to the form \verb|<jobname>-<n>.mps|.
+
+\section{Curves}
+A \verb|draw| statement with the points separated by \verb|..| draws a smooth curve through the points.
+
+Just use \verb|--|where you want straight lines and \verb|..| where you want curves.
+
+\subsection{Bezier Cubic Curves}
+When MetaPost asked to draw a smooth curve through a sequence of points, it constructes a piecewise curve with continuous slop and approximately continuous curvature. 
+\section{Linear Equation}
+For example, the MetaPost interpreter can read \verb|a+b=3; 2a=b+3;| and deduce that a=2 and b=1.
+\section{Expressions}
+It is possible to experiment with expressions by involving any of the data types metioned below by using the statement \verb|show<expression>|
+
+\subsection{Data Types}
+Ten basic data types:numeric, pair, path, transform, (rbg)color, cmykcolor, string, boolean, picture, and pen.
+
+Numeric quantities in MetaPost are represented in fixed point arithmetic as integer multiples of $\frac{1}{65536}$
+\end{document}

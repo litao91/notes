@@ -1,0 +1,183 @@
+\documentclas[a4paper,11pt]{book}
+\usepackage{parskip}
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\topmargin -1.5cm
+\oddsidemargin -0.04cm
+\evensidemargin -0.04cm
+\textwidth 16.59cm
+\textheight 25cm
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\author{LI Tao}
+\title{Artificial Intelligence}
+\begin{document}
+\chapter{Introduction}
+\emph{Artificial Inteligence} broadly defined, is concerened with intelligent behavior in artifacts. Intelligent behavior involves perception, reasoning, learning, communicating, and acting in complex environments.
+
+AI has as one of its long-tern goals: the developement of machines that can do these things as well as humans can, or possibly even better.
+
+Another goal of AI is to understand this kind of behavior whether it occurs in machines or in humans or other animals. 
+
+Some important views:
+\begin{itemize}
+\item The brain processes information in parallel, whereas conventional computer do it serially. We'll have to build new varieties of parallel computers to make progress in AI.
+\item Conventional computing machinery is based on binary logic. Truly intelligent systems will have to use some sort of "fuzzy" logic.
+\item Animal neurons are much more complex than switches--the basic building blocks of computers. We'll need to use quite relistic artificial neurons in intelligent machines.
+\end{itemize}
+\section{Approaches to Artificial Intelligence}
+The several paradigms can be clustered into two major groups.
+
+The first group includes what I will call the symbol-processing approaches. A prominent member of this family of approaches is one that uses locgical operations applied to declarative knowledge bases. This style of AI represents "knowledge" about a problem domain by declarative sentences, often based on or substantically equivalent to sentences in first-order logic. Reasoning methods are used to deduce consequences of this knowledge.
+
+This method has many variants, including ones emphasizing the role of formal axiomatization of domains in logical languages. 
+
+When applied to "real" problems, the approach requires substantial knowledge of the domain and is then often called a \emph{knowledge-based} approach.
+
+In most of the symbol-processing approaches, analysis of desired behavior and the synthesis of machine to achieve it extend through several levels. 
+
+\begin{itemize}
+\item At the top is the \emph{knowledge level} where the knowledge needed by the machine is specified.  
+\item Next comes the \emph{symbol level}, where this knowledge is represented in symbolic structures. Such as lists writen in the programming language and operations on these structures are specified.
+\item Then, there are the lower levels in which symbol-processing operations are actually implemented.
+\end{itemize}
+
+Most symbol-processing approaches use a "top-down" design method; they begin at the knowledge level and proceed downward through the symbol and implementation levels.
+
+The second group of approaches to AI includes what are called the "subsymbolic" ones.
+
+These usually proceedin "bottom-up" style, starting at the lowest level and working upward, At the lowest levels, the concept of \emph{symbol} is not as appropriate as is the concept of \emph{signal}.
+
+Prominent among the substmbolic approaches is what some have called "animat approach".
+
+People partial to this style point out that human intelligence evolved only after bilion or more years of life on earth. In order to make intelligent machines, we'll have to follow may of the same evolutionary steps.
+
+So we ought to concentrate first on duplicating signal processing abilities and contros systems of simpler animals--insects, for example and procced in steps up the evolutionary ladder.
+
+
+
+\chapter{Stimulus-Response Agent}
+Agent:An agent is anything that can be viewed as perceiving its
+\textbf{environment} through \textbf{sensors} and acting upon that environment
+through \textbf{actuators}. 
+
+We will make the general assumption that every agent can perceive its own
+actions.
+
+\textbf{percept}:The agent's perceptual inputs at any given instant. An agent's
+\textbf{percept sequence} is the complete history of every thing the agent has
+every perceived.
+
+In general, \emph{an agent's choice of action at any given instant can depend on
+the entire percept sequence observed to date}. 
+
+If we can specify the agent's choice of action for every possible percept
+sequence, then we have said more or less everything there is to say about agent.
+
+An agent's behavior is described by the \textbf{agent function} that maps any
+percept sequence to a action.
+
+Internally, the agent function for an artifical agent will be implemnted by an
+\textbf{agent program}
+
+\paragraph{Note} The agent function is a mathmatical description; the agent
+program is concrete implementation, running on the agent architecture.
+
+\textbf{Rational agent}: one that does the right thing.
+
+\textbf{Performance measures}:A performance measure embodies the criterion for
+success of an agent's behavior. \emph{As a general rule, it is better to design
+performance measures according to what one actually wants in the environment,
+rather than according to how one thinks the agent should behave}.
+
+What is rational at any given time depneds on four things:
+\begin{itemize}
+\item The performance measure that defines the criterion of success.
+\item The agent's prior knowledge of the environment
+\item The action that agent can perform
+\item The action's percept sequence to date.
+\end{itemize}
+\paragraph{Definition of a rational agent}: For each possible percept sequence,
+a rational agent select an action that is expected to maximize its performnce
+measure, given the evidence provided by the percept sequence and whatever
+built-in knowledge agent has.
+
+\textbf{Information gathering} Doing actions in order to modify future percepts.
+
+Our definition requires a rational agent not only to gather information, but
+also to learn as much as possible from what it perceives.
+
+\section{Perception and Action}
+\emph{stimulus-response(S-R) agent}:Machines that have no internal state and that simply react to immediate stimuli in their environments.
+
+The designer's job is to specify a function of the inputs that selects actions appropriate for the task. It is common to divide the processes of computing an action from the sensory signals into two separate phases.
+\begin{itemize}
+\item A perceptual processing phase produces a vector, X, of features.
+\item An action computation phase selects an action based on the feature vector.
+\end{itemize}
+The values of the features:
+\begin{itemize}
+\item Real numbers(numeric features) 
+\item categories(categorial features)
+\end{itemize}
+
+The features are selected by the designer to correlate with those properties of the robot's environment that are relevant to which action should be performed in the state described by the features.
+
+The split between perception and action is completely arbitrary.
+
+Usually, the split is made in such a way that the same features would be used repeatedly in a variety of tasks to be performed. Different tasks would have the same feature vector but different action functions.
+
+After deciding how to split, we are left with two problems:
+\begin{enumerate}
+\item converting raw sensory data into a feature vector
+\item specifiying an action function.
+\end{enumerate}
+\section{Representing and Impementing Action Functions}
+If there are R possible actions, then we must find an appropriate R-valued function of the feature vector to compute an action.
+\subsection{Production Systems}
+This is one convenient representation form for an action function.
+
+A production system comprises an ordered list of rules called \emph{production rules}. Each is written in the form $c_i\rightarrow a_j$, where $c_i$ is the \emph{conditional part} and $a_i$ is the \emph{action part}.
+
+In general, the condition part can be any binary function of features resulting from perceptual processing of the sensory inputs.
+
+To select a action, the rules are processed as follows: starting with the first rule, we look for the first rule in the ordering whose condition part evaluates to 1 and select the action part of the rule.
+
+Usually, the last rule in the ordering has 1 as its condition part.
+
+Some tasks require acting only until some specific \emph{goal} condition is achieved and then casing activity.
+
+The goal is usually expressed as a Boolean condition on the features. 
+
+In goal-achieving production systems, the condition part of the rule at the top of the list specifies the overall goal that we want the action program to achieve. Whenever it is satisfied, the agent performs no action. Condition $c_2$ and action $a_2$ are usually chosen so that if $c_1$ is not satisfied and $c_2$ is, then the execution of action $a_2$ will eventually achieve $c_1$
+
+\textbf{teleo-reactive(T-R) programs} each properly executed action in the ordering work toward achieving a condition higher in the list.
+
+This style of production system forms the basis of formalism called \emph{teleo-reactive(T-R) programs}
+\subsection{Networks}
+\emph{Threshold logic unit} (TLU), a popular type of circuit consists of networks of threshold elements or other elements that compute a nonlinear function of a weighted sum of their inputs.
+
+It computes a weighted sum of its inputs, compares this sum to a threshold value, and outputs a 1 if the threshold is exceeded.
+
+The Boolean function implemented by a TLU are called the \emph{linearly separable functions}. 
+
+A ALU actually separates the space of input vectors yielding an above threshold from those yielding a below-threshold response by a linear surface, called a \emph{hyperplane} in $n$ dimemsion
+
+In applications in which there are only two possible actions, it may be that a single TLU can compute the proper action.
+
+\emph{neural networks} a network of such elements.
+
+Rule in T-R program is implemented by a TISA(Test, Inhibit, Squelch, Act) with two inputs and two outputs.
+
+One TLU computes the conjunction of one of its input and the implement of the other input.
+
+The other TLU computes the disjunction of the other input.
+
+\chapter{Neutral Networks}
+
+
+\end{document}

@@ -1,0 +1,101 @@
+\documentclass[a4paper,11pt]{book}
+\usepackage{parskip}
+\usepackage[top=1.5cm, left=1cm, right=1cm, bottom=2.5cm]{geometry}
+\usepackage{fontspec,xunicode}
+\setmainfont[Scale=.95]{Trebuchet MS}
+\begin{document}
+\chapter{Introduction}
+\section{System Architecture}
+\subsection{Application}
+Android will ship with a set of core applications. All applications are written
+using the Java programming language. They call the APIs provided by the Application Framework.
+\subsection{Application Framework}
+Developer have full access to the same framework APIs used by the core
+applications. The application architecture is designed to simplify the reuse of
+componets; any application can publish its capabilities and any other
+application may then make use of those capabilities.
+
+The widgets provided by Application Framework:
+\begin{description}
+\item[Activity Manger]Manage the lifecycle of activities.
+\item[WindowMangaer] Manage the Window
+\item[Content Provider] Allowing application to access data of other application
+or share their data
+\item[View System] To build application, including List, Gird, Textbox, Button
+and graphics and WebView.
+\item[Notification Manager] Showing information on status bar.
+\item[Package Manager] Manage the application installed.
+\item[Resource Manager]
+\item[Hardware Services]
+\end{description}
+\section{Android Initialization Procedure}
+\begin{enumerate}
+  \item Android will boot linux kernel's Init first
+  \item Startup the linux daemons, initializing:
+    \begin{itemize}
+      \item usbd, to manage usb connection
+      \item adbd, Android Debug Bridge, to manage ADB connection. 
+      \item debuggered, manage debug requests
+      \item rild, Manage wireless connections
+    \end{itemize}
+  \item Start a Zygote thread, this thread will:
+    \begin{itemize}
+      \item Initialize a Dalvik instance.
+      \item Load a Class and a Listener for Socket requests
+      \item Create a Dalvik instance for managing applicaiton threads
+    \end{itemize}
+  \item Initialize runtime thread. It will:
+  \begin{itemize}
+   \item Initialize ServiceManager 
+  \item register ServieManager. It will be the default Context manager for Binder
+  service
+  \end{itemize}
+  \item After initialization of runtime, runtime thread wil send a request to
+  Zygote to start system service, and Zygote will create an Dalvik VM instance for
+  system service, and start the system server.
+  \item System Server will start the native system services, including
+  \emph{Surface Flinger} and \emph{Audio Flinger}. All those services will
+  reigster to Service Manager as the target of IPC.
+  \item System Service will start the Android Manage Service, all Android
+  Services will register to the Service Manager.
+  \item After loading all service, system will waiting for the running of
+  applications. Every application will start a new thread. 
+\end{enumerate}
+\chapter{Android Kernel Architecture}
+\section{The relation between Linux and Android}
+\section{Android is not Linux}
+Android:
+\begin{itemize}
+\item It doesn't have Local window system, it doesn't need to use the X server
+\item It doesn't have glibc support, it uses Bionic Libc instead
+\item It is not a standard Linux kernel. For example the Gold-Fish platform
+based on ARM, and yaffs2FLASH filesystem.
+\item Drivers. Android enhanced the Linux drivers. Mainly on:
+  \begin{description}
+  \item[Android Binder] Based on OpenBinder framework, provide InterProcess
+  Communication. The source code located in
+  \verb|drivers/staging/android/binder.c|
+  \item[Power Manager (PM)] A Powermanager opitimized for Embeded Device. The
+  source code is under \verb|kernel/power|
+  \item[Low Memory Killer] More flexible OOM(Out Of Memory) Scheme, the source
+  code is in drivers/staing/android/lowmemorykiller.c
+  \item[Ashmem] Share memory between threads, and provide a scheme for Kernel to
+  manage and recycle the memory. Source code in mm/ashmem.c
+  \item[Android PMEM(Physical)] Provide a continuous physical memory. In
+  \verb|drivers/misc/pmem.c|
+  \item[Android Logger]
+  \item[Android Alam] A timer to wake the device up from sleeping. At
+  \verb|drivers/rtc/alarm.c|
+  \item[USB Gadget Driver] in \verb|drivers/usb/gadget|
+  \itme[Android Ram Console] Provide debugging functions. Allowing debug log
+  to write into a RAM Console device. It's a Buffer based on RAM. in
+  \verb|drivers/staging/android/ram_console.c|
+  \item[Android timed device] 
+  \item[Yaffs2 Filesystem] in \verb|fs/yaffs2/| For flash storage (Yet another
+  flash file system).
+  
+  \end{description}
+\end{itemize}
+
+\end{document}
+

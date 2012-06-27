@@ -1,0 +1,1454 @@
+\documentclass[a4paper,11pt]{book}
+\usepackage{parskip}
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\topmargin -1.5cm
+\oddsidemargin -0.04cm
+\evensidemargin -0.04cm
+\textwidth 16.59cm
+\textheight 25cm
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\begin{document}
+\chapter{Modern JS Programming}
+\begin{itemize}
+\item Object-Oriented JavaScript
+\item Unobstrusive DOM Scripting: A complete separation of your HTML content:
+the data coming from the server, and the JS code used to make it all dynamic.
+  \begin{itemize}
+  \item The Document Object Model(DOM): provide an intuitive way for developers
+  to navigate an XML hierarchy. 
+  \item Events: The glue that holds together all user interaction within an
+  application. Have to look for user interactions and attempt to update the user
+  interface accordingly. The combination of using the DOM and the JS events is
+  the fundamental union that makes all modern web application what they are.
+  \item JS and CSS: Cascading style sheets CSS serve as the standard for laying
+  out simple, unobtrusive web page that still afford you the greatest amount of
+  power while providing your users with the least amount of compatiblity
+  issues.
+  \end{itemize}
+\item AJAX, or Asynchronous JavaScript and XML: additional requests are made
+from the client to the server even after the page has completely loaded.
+\item Browser Support
+\end{itemize}
+\chapter{Object-Oriented JavaScript}
+Objecs are the fundamental units of JavaScript. Virtually everything n JS is an
+object and takes advantage of the fact. 
+\section{Language Features}
+\subsection{References}
+A \emph{reference} is a pointer to an actual location of an object. The promise
+is that a physical object is never a reference. 
+
+A string is always a string; an array is always an array. However, multiple
+variables can refer to that same object. 
+
+Additionally, an object can contain a set of properties, all of which are simply
+references to other object. When multiple varialbes point to the same object,
+modifying the underlying type of that object will be reflected in all variables.
+Example:
+\begin{verbatim}
+//set obj to an empty object
+var obj = new Object();
+
+//objRef now refert to the other object
+var objRef = obj;
+
+//Modify a property in the original object
+obj.oneProperty = true;
+//We now see that that change is represented in both variables
+//Since they both refer to the same object
+console.log(obj.oneProperty == ObjRef.oneProperty);
+\end{verbatim}
+
+Self-modifying objects are very rare in JS. For example, the array object is
+able to add additional items to itself using the push() mehtod. Since, at the
+core of an Array object, the values are stored as object properties, where an
+object becomes globally modified. 
+
+Example:
+\begin{verbatim}
+//Create an array of items
+var items = new Array("one", "two", "three");
+
+//Create a reference to the array of items
+var itemsRef = items;
+
+//Add an item to the original array
+itmes.push("four");
+
+//The length of each array should be the same,
+console.log(items.length == itemRef.length);
+\end{verbatim}
+
+It's important to remember that references only point to the final referred
+object, not a reference itself. It traverses down the reference chain and only
+point to the core object.
+
+Example of Object Modification Resulting in a New Object, Not a Self-Modified
+Object:
+\begin{verbatim}
+var item = "test";
+var itemRef = item;
+//Concatenate some new text onto the string object
+//NOTE: This creates a new object, and does not modify
+//the original object.
+iten += "ing";
+
+//The values of item and itemRef are NOT equal, as a whole
+//new string object has been created
+console.log(item != itemRef);
+\end{verbatim}
+
+\subsection{Funciton Overloading and Type-Checking}
+Function overloading is isn't immediately avaliable in JavaScript, a number of
+tools are provided that make this quest entirely possilbe.
+
+Function overloading requires two things: 
+\begin{itemize}
+\item The ability to determine how many arguments are provided
+\item The ability to determine the type of the arguments that are provided.
+\end{itemize}
+
+Inside of every function in JS there exists a contextual variable named
+\emph{arguments} that acts as a pseudo-array containing all the arguments passed
+into the funciton. 
+
+Arguments isn't a true array(You can't modify it or call .push()), but you can
+access items in the array and it does have a .length property.
+
+Example:
+\begin{verbatim}
+//A simple function for sending a message
+function sendMessage(msg, obj) {
+  //If both a message and object are provided
+  if(arguments.length==2) 
+    //Send the mssage to the object
+    obj.handleMsg(msg);
+
+  //Otherwise, assume that only a mesage was provided
+  else
+    alert(msg);
+}
+//Call the funcition with one argument
+sendMessage("Hello, World!");
+
+//Otherwise, we can pass in our own object that handles
+sendMessage("How are you?", {
+    handleMsg: function(msg) {
+      alert("This is a custom message: " + msg);
+    }
+});
+//A function that takes any number of arguments and make
+//an array out of them
+function makeArray() {
+  //The temp array
+  var arr = [];
+
+  //Go through the arguments
+  for(var i = 0;i < arguments.length; i++) {
+    arr.push(arguments[i]);
+  }
+
+  //Return the resulting array
+  return arr;
+}
+\end{verbatim}
+Additionally, there exist another method for determining the number of arguments
+passd to function. We take advantage the fact that any argument that isn't
+provided has a value of \emph{undefined}
+Example:
+\begin{verbatim}
+function displayError(msg) {
+  if(typeof msg == 'undefined') {
+    msg = "An error occurred";
+  }
+  //Display
+  alert(msg);
+}
+\end{verbatim}
+
+JavaScript is currently a dynamically typed language. There are a number of
+different ways to check the type of a varialbe.
+
+The first way is by using the obvious-sounding typeof operator. This utility
+gives us a string name representing the type of the contents of a variable. This
+would be the perfect solution exception that for variables of type of type
+object or array, or a custom object (it only returns object).
+
+The second way is by referencing a property of all JavaScript objects called
+constructor. This property is reference to the function used to originally
+construct this object.
+
+Example:
+\begin{verbatim}
+if(num.constructor == String) 
+  num=parseInt(num)
+if(str.constructor == Array)
+  str = str.join(',');
+\end{verbatim}
+Type-Checking Variables \\
+\begin{tabular}{l l l}
+\hline
+\textbf{Variable} & \textbf{typeof Variable} & \textbf{Variable.constructor} \\
+\hline
+\verb|{an:"object"}| & object & Object \\
+\verb|["an", "array"]| & object & Array\\
+\verb|fuction(){}| & function & Function \\
+\verb|"a string"| & string & String \\
+\verb|55| & number & Number\\
+\verb|true| & boolean & Boolean \\
+\verb|new User()| & ojbect & User
+\end{tabular}
+\subsection{Scope}
+In JS, scope is kept with functions, but not within blocks. An interesting
+aspect of broswer-based JS is that all globally scoped varialbes are actually
+just properties of the window object.
+\begin{verbatim}
+var test = "test";
+//You'll notice that our 'global' variable and the test
+//property of the window object are identical
+alert(window.test = test);
+\end{verbatim}
+
+When a varialbe isn't explicitly defined, it will become defined globally.
+
+\subsection{Closures}
+Closures are means through which inner functions can refer to the varialbes
+present in their outer enclosing function after their parent functons have
+already terminated.
+
+\begin{verbatim}
+//Find the element with an ID of 'main'
+var obj = document.getElementById("main");
+
+//Change it's border stlying
+obj.style.border = "1px solid red";
+
+//Initialize a callback that will occur in one second
+setTimeout(function(){
+  //Which will hide the object
+  obj.style.display = 'none';
+}, 1000);
+
+//A generic function for displaying a delayed alert message
+function delayedAlert(msg, time) {
+  //Initialize an enclosed callback
+  setTimeout(function() {
+    //Which utilitzes the msg passed from the enclosing function
+    alert(msg);
+  }, time);
+}
+
+//Call teh delayedAlert function with two arguments
+delayedAlert("Welcome!", 2000);
+\end{verbatim}
+The second fuction defined, \verb|delayedAlert|, shows a solution to the
+setTimeout mess that occurs, alone with the ability to have closures within
+function scopes.
+
+\emph{Curring} is a way to, essentially, prefill in a number of arguments to a
+function, creating a new, simpler function. The following example has a simple
+example of currying, creating a new function that pre-fills in an argument to
+another function.
+\begin{verbatim}
+//A function that generates a new function for adding numbers
+function addGenerator(num) {
+  //Returns a simple function for adding two numbers 
+  //with the first number borrowed from the generator
+  return function(toAdd) {
+    return num + toAdd;
+  };
+}
+var addFive = addGenreator(5);
+alert(addFive(4) == 9);
+\end{verbatim}
+
+Using a self-executing anonymous function you can essentially hide all normally
+global variables from being seen by other code:
+\begin{verbatim}
+//Creaet a new anonymous function, to use as a wrapper
+(function() {
+  //The variable that would, normally, be global
+  var msg = "Thanks for visiting!";
+  //Binding a new function to a global object
+  window.onunload  = function() {
+    //Which uses the hidden varialbe
+    alert(msg);
+  };
+  //close off the anonymous function and execute it
+})();
+\end{verbatim}
+Closure allow you to reference variables that exist within the parent function.
+However, it does not provide the value of the variable at the time it is
+created; it provides the last value of the variable within the parent function. 
+Example:
+\begin{verbatim}
+//An element with an ID of main
+var obj = document.getElementById("main");
+//An array of items to bind to
+var items = ["click", "keypress"];
+
+//Iterate through each of the items
+for(var i = 0; i < items.lenght; i++) {
+  //Use a self-executed anonymous function to induce scope
+  (function() {
+    //Remermber the value witin the scope
+    var item = items[i];
+    //Bind a function to the element
+    obj["on"+item] = function() {
+      //item refers to a parent varialbe that has been successfully
+      //scoped within the context of this for loop
+      alert("Thanks for your" + item);
+    };
+  })();
+}
+\end{verbatim}
+\subsection{Context}
+Within JS your code will always have some form on context (an object within
+which it is operating). 
+
+The way context works is through the \verb|this| varialbe. The \verb|this|
+variable will always refer to the object that the code is currently inside of.
+\begin{verbatim}
+var obj = {
+  yes: function() {
+    // this == obj
+    this.val = true;
+  },
+  no: function() {
+    this.val = false;
+  }
+};
+//We see that there is no val property in the 'obj' object
+alert(obj.val==null);
+//We run the yes function and it changes the val property
+/associate with the 'obj' object
+obj.yes();
+alert(obj.val == true);
+alert(obj.val == true);
+//However, we now point window.no to the obj.on method and run it
+window.no = obj.no;
+window.no();
+// This results in the obj object staying the same (as the context was
+// switched to the window object
+alert(obj.val==true);
+// and window val property getting updated
+alert(window.val == false);
+\end{verbatim}
+
+Two different methods, call and apply, can be used to switch context of a
+function:
+\begin{verbatim}
+//A simple function that sets the color style
+function chageColor(color) {
+  this.style.color  = color;
+}
+//Calling it on the window object
+changeColor("white");
+
+//Find the element with ID of main:
+var main = document.getElementById("main");
+
+//set its color to black, using the call mehtod
+//The call method sets the contex with the first argument
+//and passes all the other arguments as argumens to the function
+changeColor.call(main, "black");
+
+//A function that sets the color on the body element
+function setBodyColor() {
+  //The apply mehtod sets the context to the body element
+  //With the first argument, the second argument is an array
+  //of argument that gets passed to the funtion
+  changeColor.apply(document.body, arugments);
+}
+setBodyColor("black");
+\end{verbatim}
+\section{Object-Oriented Basics}
+\subsection{Objects}
+At their most basic levl, objects exist as a collection of properties, almost
+like a hash construct that you see in other lanuages.
+Two examples of Creating a Simple Object and setting Properties:
+\begin{verbatim}
+//Creates a new Object object and stores it in 'obj'
+var obj = new Object();
+//Set some properties of the object to different values
+obj.val = 5;
+obj.click=function() {
+  alert("hello");
+};
+
+//Some equivelent code, using the {...} shorthand
+//Along with key-value pars for defind properties
+var obj = {
+  val: 5;
+  click: funciton() {
+    alert("hello");
+  }
+};
+\end{verbatim}
+\subsection{Object Creation}
+JS doesn't have a concept of classes. In JS, objects can create new objects and
+objects can inherit from other objects. This whole concept is called
+\textbf{prototypal inheritance}.
+
+Fundamentally, there still needs to be a way to create a new object.  JS makes
+it so that any funciton can also be instantiated as an object. Example of
+creation and Usage of a Simple Object:
+\begin{verbatim}
+//A simple function which takes a name and saves
+//it to the current context
+function User(name) {
+  this.name = name;
+}
+
+//Create a new instance of that funciton with the specified name
+var me =  new User("My Name");
+
+//We can see that its name has been set as a property of itself
+alert(me.name == "My name");
+
+//Now, since User() is just a function, what happens 
+//When we treat it as such?
+User("Test");
+//Since its 'this' context wasn't set, it defaults to the global 'window'
+//object, meaning that window.name is euqal to the name provided.
+alert(window.name == "Test");
+\end{verbatim}
+\subsubsection{Public Methods}
+To achieve public methods, you need to learn about a property called
+\textbf{propotype}, which simply cntains an object that will act as a base
+reference for all new copies of its parent object. Essentially, any property of
+the prototype will be avaliable on every instance of that object.
+
+Since an object prototype is just an objec,t you can attach new porperties to
+them, just like any other object. Attaching new porperties to a prototype will
+make them a part of every object instantiated from teh original prototype,
+effectively making all properties public. Example:
+\begin{verbatim}
+//Create a new User Constructor
+function User(name, age) {
+  this.name = name;
+  this.age = age;
+}
+//Add new function to the object prototype
+User.prototype.getName = function() {
+  return this.name;
+};
+//And add another function to the prototype
+//Notice that the context is going to be within the 
+//the instantiated object
+User.prototype.getAge = function() {
+  return this.age;
+};
+
+//Instantiage a new User OBject
+var user = new User("Bob", 44);
+//We can see that the two methods we attached are with the
+//ojbect, with proper contexts
+alert(user.getName() == "Bob");
+alert(user.getAge() == 44);
+\end{verbatim}
+\subsubsection{Private Method}
+Private methods and variables are only accessible to other private methods,
+private varialbes, and privileged mehtods. 
+
+Example of a Private Method Only Usable by the Constructor Function:
+\begin{verbatim}
+//An Object constructor that represents a classroom
+function Classroom(students, teacher) {
+  //A private method used for displaying all the students in the class
+  function disp() {
+    alert(this.name.join(", "));
+  }
+  //Store the class data as a public object properties
+  this.students = students;
+  this.teacher = teacher;
+
+  //Call the private method to display the error
+  disp();
+}
+//Create a new classroom object
+var class = new Classroom(["John", "Bob"], "Mr. Smith");
+//Fails, as disp is not a public property of the object
+class.disp();
+\end{verbatim}
+\subsubsection{Privileged Methods}
+\textbf{Privileged methods} is a term refer to methods that are able to view and
+manuipulate private variable while still accessible to users as a public mehtod.
+Example:
+\begin{verbatim}
+/Create a new User object constructor
+function User(name, age) {
+  //Attempt to figure out the year that the user was born
+  var year = (new Data()).getFullYear() - age;
+  //Create a new Privileged method that has access to the
+  //year varialbe, but is still publically avaliable
+  this.getYearBorn = function() {
+    return year;
+  };
+}
+\end{verbatim}
+In essence, privileged methods are dynamically generated methods, because
+they're added to the object at runtime, rather than when the code is first
+compiled.
+
+Example of Dynamically Generated Methods That Are Created When a New Object Is
+Instantiated
+\begin{verbatim}
+//Create a new user object that accetps an object of properties
+function User(properties) {
+  //Iterate through the propertis of the object and make sure
+  //that it's properly scoped
+  for(var i in properties) {(function () {
+    //Create a new getter for the property
+    this["get"+i] = function() {
+      return properties[i];
+    };
+    //Create a new setter for the property
+    this["set"+i] = function(val) {
+      properties[i] = val;
+    }
+  })();}
+}
+//Create a new user object instance and pass in an object of
+//properties to see it with
+var user = new User({name:"Bob", age:44});
+//Just note that the name property does not exist, as it's private
+alert(user.name == null);
+//However, we're able to access its value using the new getname
+//mehtod, that was dynamically generated
+alert(user.getname() == "Bob");
+\end{verbatim}
+\subsubsection{Static Methods}
+The function exist as static properties of an object. As a property, they are
+not accesssible within the context of an instance of that object; they are only
+avalialbe in the context of an instance of the object; they are only available
+in the same context as the main object itself.
+\begin{verbatim}
+//A static method attached to the User object
+//User.cloneUser = function(user) {
+  //Create and return an new User
+  return new User{
+    user.getName();
+    user.getAge();
+  };
+};
+
+\end{verbatim}
+\chapter{Creating Reusable Code}
+\section{Standardizing Object-Oriented Code}
+JS uses a unique form of object creation and inheritance called
+\textbf{prototypal inheritance}. That is an ojbect constructorcan inherit
+methods from one other ojbect, creating a \emph{prototype} ojbect from which all
+other new objects are built.
+
+Prototypes do not inherit their properties from other prototypes or other
+constructors; they inherit them from physical objects. Example:
+\begin{verbatim}
+//Create the constructor for Person object
+function Person(name) {
+  this.name = name;
+}
+//Add a new method to the Person object
+Person.prototype.getName = function() {
+  return this.name;
+};
+
+//Create a new User object constructor
+function User(name, password) {
+  //Notice that this does not support graceful overloading/inheritance
+  //e.g. begin able to call teh super class constructor
+  this.name = name;
+  this.password == password;
+};
+//The User object inherits all of the Person object's methods
+User.prototype = new Person();
+//We add a method of our own to the user object
+User.prototype.getPassword = function() {
+  return this.password;
+};
+\end{verbatim}
+The most important is \verb|User.prototype = new Person();|. User is a reference
+to the function constructor of the User obect, \verb|new Person()| creates a new
+Person object, using the Person constructor. You set the result of this as the
+value of the User constructor's prototype. This means that nay time you do
+\verb|new Person()|, then new User object will have all the methods that the
+Person object had when you did \verb|new Person()|. 
+\subsection{Classical Inheritance}
+Example of three functions that built to create a comprehensive form of
+classical JS inheritance:
+\begin{verbatim}
+//A simple helper that allows you to bind new functions to the 
+//prototype of an object
+Function.prototype.method = function(name, func) {
+  this.prototype[name] = func;
+  return this;
+};
+
+//A function that allow you to gracefully inherit
+//function from other objects and be able to still call the 'parent'
+//object's function
+Functoin.method('inherits', function(parent) {
+  //Keep track of how many parent-levels deep we are
+  var depth = 0;
+  //Inherit the parent's method
+  var proto = this.prototype = new parent();
+  //Create a new 'priveledged' function called 'uber', that when called
+  //executes any function that has been written over in the inheritance
+  this.method('uber',function uber(name) {
+    var func; //The function to be exe
+    var ret; //the return value of the function
+    var v = parent.prototype; //The parent's prototype
+    //If we are already within another 'uber' function
+    if(depth) {
+      //Go the necessary depth to find the orignal prototype
+      for(var i = depth; i > 0; i -= 1) {
+        v = v.constructor.prototype;
+      }
+      //and get the function from that prototype
+      func = v[name];
+      //Otherwise, this is the first 'uber' call
+    } else {
+      // Get the function to execute from the prototype
+      func = proto[name];
+      // If the function was a part of this prototype
+      if(func == this[name]) {
+        // Go to the parent's prototype instead
+        func = v[name];
+      }
+    }
+    // Keep track of how 'deep' we are in the inheritance stack
+    depth += 1;
+    // Call the function to execute with all the arguments but the first
+    // (which holds the name of the function that we're executing)
+    ret = func.apply(this, Array.prototype.slice.apply(arguments, [1]));
+    // Reset the stack depth
+    depth -= 1;
+    // Return the return value of the execute function
+    return ret;
+  });
+  return this;
+});
+
+// A function for inheriting only a couple functions from a parent object,
+// not every function using new parent()
+Function.method('swiss', function(parent) {
+  // Go through all of the methods to inherit
+  for (var i = 1; i < arguments.length; i += 1) {
+    // The name of the method to import
+    var name = arguments[i];
+    // Import the method into this object's prototype
+    this.prototype[name] = parent.prototype[name];
+  }
+  return this;
+});
+\end{verbatim}
+\begin{itemize}
+\item \verb|Function.prototype.method|: This serves as a simple way of attaching
+a function to the prototype of a constructor. This works because all
+constructors are functions, and thus gain the new "method" method.
+\item \verb|Function.prototype.inherits|: This function can be used to provide
+simple single-parent inheritance. The bulk of the code in this function centers
+around the ability to call \verb|this.uber('method')| name in any of your object
+methods, and have it execute the parent object's method that it's overwriting. 
+\item \verb|Function.prototype.swiss|: This is an advanced version of the
+.method() function which can be used to grab multiple methods from a single
+parent object. When used together with multiple parent objets, you can have a
+form of functional, multiple inheritance.
+\end{itemize}
+\section{Packagin}
+\subsection{Namespacing}
+JS currently does not support namespaceing by default, so we have to make do
+with an adequate bu similar technique. In JS, all objects can have properties,
+which can in turn contain other objects, you can create somethng that appears
+and works very similarly to the namespaceing:
+\begin{verbatim}
+// Create a default, global, namespace
+var YAHOO = {};
+// Setup some child namespaces, using objects
+YAHOO.util = {};
+// Create the final namespace, which contains a property with a function
+YAHOO.util.Event = {
+  addEventListener: function(){ ... }
+};
+// Call the function within that particular namespace
+YAHOO.util.Event.addEventListener( ... )
+\end{verbatim}
+\chapter{The Document Object Model}
+The DOM was constructed to provide an intuitive way for developers to navigate
+an XML hierarchy. 
+\section{Navigatin the DOM}
+The way that the XML structure is represented in the DOM is as navigable tree.
+All XML document start with a single root node (called the \emph{document
+element}), which contains pointers to its children. Each child node then
+contains pointers back to its parent, its fellow siblings and its children.
+
+The DOM uses some special terminology to refer to the differnt objects within
+the XML tree. Every object in a DOM tree is a \emph{node}. Each node can have a
+different \emph{type}, such as element, text, or document. Note that we need to
+handle the white space while navigating the tree.
+\section{Binding to Every HTML Element}
+There is a powerful object prototype that's avaliabe named HTMLElement, which
+allows you to attach functons and data to every single HTML DOM element. Three
+changes that you have to make to the functions that you created in the previous
+section in order for this to work:
+\begin{enumerate}
+\item You need to add a sinlge line to the top of the functions to refer to the
+element as \emph{this}, as opposed to retrieving it from the list of arguments.
+\item You need to remove the element argument that you are no longer using. 
+\item You need to bind the function to the HTMLElement prototype, so that you
+can use it on every HTML element in the DOM.
+\end{enumerate}
+
+Dynamically Binding a New DOM Navigating Function to All HTML DOM elements
+\begin{verbatim}
+HTMLElement.prototype.next = function() {
+  var elem=this;
+  do {
+    elem = elem.nextSilbing;
+  }while(elem && elem.nodeType!=1);
+  return elem
+};
+\end{verbatim}
+Now you can use the next function like this:
+\begin{verbatim}
+document.body.first().next();
+\end{verbatim}
+
+\section{Standard DOM Method}
+\begin{itemize}
+\item \verb|getElementById("everywhere")|:This method, which can only be run on
+the document object, finds all elements that have an ID equal to
+\verb|everywhere|. This is a very powerful function and is the fastest way to
+immediately access an element
+\item \verb|getElementsByTagName("li")|: This method, which can be run on any
+element, finds all descendant elements that have a tag name of li and returns
+them as a NodeList.
+\end{itemize}
+\section{Waiting for the HTML DOM to load}
+Waiting for the Page to load:
+\begin{verbatim}
+//Wait until the page is loaded
+addEvent(window,"load",function() {
+  //Perform HTML DOM opertions
+}
+\end{verbatim}
+Waiting for Most of the DOM to Load: Embedding a script as the very last element
+in the page.
+\section{Finding Elements in an HTML Document}
+\subsection{Finding Elements by Class Name}
+\begin{verbatim}
+function hasClass(name, type) {
+  var r = [];
+  var re = new RegExp("(^|\\s)" + name + "(\\s|$)");
+  var e = document.getElementsByTagName(type||"*");
+  for(var j = 0; j<e.length; j++) {
+   if(re.test(e[j])) r.push(e[j]);
+   return r;
+  }
+}
+\end{verbatim}
+You can now use this function to quickly find any element, or any element of a
+specific type, with a specified class name.
+\section{Finding Elements by CSS Selector}
+A CSS selector is the expression used to apply CSS styles to a set of elements.
+\subsubsection{CSS Query}
+Read the fucking code, omit here.
+\subsubsection{JQuery}
+Some examples:
+\begin{verbatim}
+//Find all <div>s that have a class of 'links' and a <p> element inside of them
+$("div.links[p]")
+//Find all descendants of all <p>s and <div>s
+$("p,div").find("*");
+//Find every other link that ponints to google
+$("a[@href^=google.com']:even");
+\end{verbatim}
+Now, to use the results from jQuery, you have two options. First, you can do
+\verb|$("expression.get()| to get an array of matched elements.
+
+The second thing that you can do is use jQuery function to manipulate it:
+\begin{verbatim}
+$("a[@href^=google.com]").css("border","1px dashed red");
+\end{verbatim}
+\section{XPath}
+Side by side comparision of CSS3 selector and XPath Expressions:
+
+\begin{tabular}{l l l}
+\hline
+\textbf{Goal} & \textbf{CSS 3} & \textbf{XPath} \\
+\hline
+All elements & \verb|*| &\verb|//*|  \\
+All \verb|<p>| elements & \verb|p| & \verb|//p| \\
+All child elements & \verb|p>*| & \verb|//p/*|\\ 
+Element by ID & \verb|#foo| & \verb|*[@id='foo']| \\
+Element by class & \verb|.foo| & \verb|//[contains(@class,'foo')]|\\
+Element with attribute & \verb|*[title]| & \verb|//*[@title]|\\
+First child of all \verb|<p>| & \verb|p>*:first-child| & \verb|//p/*[0]| \\
+All \verb|<p>| with a child & Not possible & \verb|//p[a]|\\
+Next element & \verb|p+*| & \verb|//p/following-sibling::*[0]|\\
+\hline
+\end{tabular}
+\section{Getting the Content of an Element}
+All DOM elements can contain one of the three things: text, more elements, or a
+mixture of text and elements.
+\subsection{Getting the Text Inside an Element}
+\begin{verbatim}
+function text(e) {
+  var t = "";
+  // If an element was passed, get its children,
+  // otherwise assume it's an array
+  e = e.childNodes || e;
+  // Look through all child nodes
+  for ( var j = 0; j < e.length; j++ ) {
+    // If it's not an element, append its text value
+    // Otherwise, recurse through all the element's children
+    t += e[j].nodeType != 1 ?
+    e[j].nodeValue : text(e[j].childNodes);
+  }
+    // Return the matched text
+  return t;
+}
+\end{verbatim}
+\subsection{Getting the HTML Inside an Element}
+Getting the HTML inside of an element is one of the easiest DOM tasks that can
+be performed. All modern browsers now include an extra property on every HTML
+DOM element: innerHTML, with this property you can get all the HTML and text
+inside of an element.
+
+Using the innerHTML property is straightforwad: accessing the property give s
+you a string contining the HTML contents of the element. If the element doesn't
+contain any subelements and only text, the returned string will only contain the
+text. 
+\section{Working with Element Attributes}
+\subsection{Working with Element Attribute}
+Typically, the list of attributes that an element has is preloaded with
+information collected from the XML representation of the element itself and
+stored in an associative array for later access.
+
+As this example of an HTML snippet inside a web pate:
+\begin{verbatim}
+<form name="myForm" action="/test.cgi" method = "POST">
+...
+</form>
+\end{verbatim}
+Once loaded into the DOM, and the varialbe \verb|formElement|, the HTML forme
+element would have an associative array from which you could collect name/value
+attribure pairs. The result of this would look like this:
+\begin{verbatim}
+formElem.attributes = {
+  name: "myForm"
+  action: "/test.cgi",
+  method: "POST"
+};
+\end{verbatim}
+Determining wether an Element Has a Certain Attribute:
+\begin{verbatim}
+function hasAttribute(elem, name) {
+  return elem.getAttribute(name) != null;
+}
+\end{verbatim}
+\subsection{Getting and Setting an Attribute Value}
+If you wish to be safe and always use generic XML DOM-compatible methods:
+\begin{verbatim}
+//Get an attribute
+id("everywhere").getAttribute("id");
+//Set an attribute value
+tag("input")[0].setAttribute("value","Your Name");
+\end{verbatim}
+HTML DOM documents have an extra set of properties:
+\begin{verbatim}
+//Quick get an attribute
+tag("input")[0].value
+//Quick set an attribute
+tag("div")[0].id = "main";
+\end{verbatim}
+There are a couple strange cases with attributes that you should be aware of.
+The one that's most frequently encountered is that of accessing he class name
+attribute. To work with class names consistently in all browsers you must access
+the \verb|className| attribute using \verb|elem.className|, instead of using the
+more appropriately named \verb|getAttribute("class");|. This is also the case
+for the CSS attriubtes: \verb|cssFloat| and \verb|cssText|
+\section{Modifying the DOM}
+By knowing how to modify the DOM, you can do anything from creating custom XML
+document on the fly to building dynamic forms tha tadapt to user input;
+\subsection{Creating Nodes Using the DOM}
+The primary method behind modifying the DOM is the \verb|createElement|
+function, which gives you the ability to create new element on the fly. 
+
+The \verb|createElement| method takes one parameter, the tag nbame of the
+element, and returns the virtual DOM representation of that element--no
+attributes or styling included.  If you're developing applications that use
+XSLT-generated XHTML pages, you have to remeber that you're actually using an
+XML document and that your elements need to have the correct XML namespace
+associated with them.
+
+To seamlessly work around this, you can have a simple function that quitely
+tests to see whether the HTML DOM document that you are using has the ability to
+create new elements with a namespace. If this is the case, you must create a new
+DOM element with the correct XHTML namespace.
+
+A Generic Function for Creating a New DOM Element:
+\begin{verbatim}
+function create(elem) {
+  return document.createElementNS?
+    document.createElementNS('http://www.w3.org/1999/xhtml',elem):
+    document.createElement(elem);
+}
+\end{verbatim}
+\subsection{Inerting into the DOM}
+The first function \verb|insertBefore| allowsyou to insert an element before
+another child element. When you use the function, it looks something like
+this:\verb|parentOfBeforeNode.insertBefore(nodeToIndert,beforeNode)| 
+You are inserting the first element, before the second.
+
+The second function:\verb|parentElem.appendChild(nodeToInsert);| It is called on
+an element, appending the specified node to the end of the list of the child
+node.
+\subsection{Injecting HTML into the DOM}
+It is also a way to set the HTML inside of an element. As an example of its
+simplicity, let's assume that you have an empty <ol> element and you want to add
+some <li>s to it; the code to do would look like this:
+\begin{verbatim}
+//Add some LIs to an OL element
+tag("ol")[0].innerHTML = "<li>Cats.</li><li>Dogs.</li><li>Mice.</li>";
+\end{verbatim}
+There are a number of tricky problems that exist with unsing the
+\verb|innerHTML| method doesn't exist in XML documents, meaning that you'll have
+to continue to use the traditional DOM creation methods. 
+\begin{itemize}
+\item innerHTML method doesn't exist in XML DOM documents.
+\item XHMTL documents that are created using client-side XSLT don't have an
+innerHTML method, as they too are pure XML documents
+\item innerHTML completely removes any notes that already exist inside of the
+element.
+\end{itemize}
+\subsection{Removing Nodes from the DOM}
+The function:\verb|NodeParent.removeChild(NodeToRemove)|
+\chapter{Events}
+\section{Introduction to JS Events}
+Events are teh glue that holds everything together. In a nicely designed JS
+application, you're going to have your data source and its visual
+representation. The combination of using the DOM and JS events is the
+fundamental union that makes all modern web application what they are.
+
+\subsection{Asynchronous Events VS. Threads}
+The event system in JS is rather unique. It operates completely asynchronously
+using no threads at all. This means that all code in your application will be
+reliant upon other actions -- such as a user's click or page loading--
+triggering your code.
+
+The fundamental different between threaded program design and asynchronous
+program design is how you wait for things to happen. In a threaded program you
+would keep checking over and over whether your condition has been met. Whereas
+in an asynchronous program you would simply register a callback function with an
+event handler, and then whenever that event occurs, the handler would let you
+know by executing your callback function. 
+
+\subsubsection{JS Threads}
+As it stands today, JS threads do not exist. The closest that you can get is by
+using a \verb|setTimeout()| callback, but even then, it's less thatn ideal.
+Because in JS loops are blocking (in that no other operations can be executed
+while look is operating). So we cannot use a loop to wait for an action works.
+
+\subsubsection{Asynchronous Callbacks}
+The programmatic alternative to using threads to constantly check for updates is
+to use asynchronous callbacks, which is what JS uses.
+
+You tell a DOM element that anytime an event of a specific type is called, you
+want a function to be called to handle it. This means that you can provide a
+reference to the code that you wish to be executed when needed and the browser
+takes care of all the details. Example:
+\begin{verbatim}
+//Register a function to be called whenever the page is loaded.
+window.onload = loaded;
+//The function to call whenever the page is loaded
+function loaded() {
+  doucment.getElementById("body").style.border = "1px solid #000";
+}
+\end{verbatim}
+The only code that is executed right away is the binding of the event handler to
+the event listener. The broswer, whenever the page is completely loaded, calls
+the function associated with window.onload and execute it.
+
+One point is that the order of events can vary and can be handled differently
+depending on the type of event and where in the DOM the element exists. 
+\subsection{Event Phases}
+The JS events are executed in two phases called the \emph{capturing} and
+\emph{bubbling} phases. What this means is that when an event is fired from an
+elemnt, the elements that are allowed to handle it, and it what order, very. 
+
+Look at the following code:
+\begin{verbatim}
+<body>
+  <div id="body">
+    <ul class="links">
+      <li>
+        <a href="/">Home</a>
+      </li>
+      <li><a href="/about/">About</a></li>
+    </ul>
+  </div>
+</body>
+\end{verbatim}
+Pretening that the user clicked the \verb|<a>| element, the click handler for
+the document is fired first, then the \verb|<body>|'s handler, then
+\verb|<div>|'s handler, and so on, down to \verb|<a>| element; that is called
+the \emph{capturing} phase. Once that finishes, it moves back up the tree again,
+and the \verb|<li><ul><div><body>|, and document event handlers are all fired.,
+n that order.
+
+The way that you're binding the event listeners is by using an old "traditional"
+means of binding events by setting the onEvent property of an element, which
+only supports event bubbling, not capturing. 
+\section{Common Event Features}
+\subsection{The Event Object}
+One standard feature of event handlers is some way to access an event object,
+which contextual information about the current event. This object serves as a
+very valuable resource for certain events. 
+\subsection{The this Keyword}
+The this keyword serves as a way to access the current object within the scope
+of a function. Modern broswers give all event handlers some context using the
+this keyword.
+\subsection{Canceling Event Bubbling}
+Stopping the bubbling (or capturing) of an event can prove immensely useful in
+complex applications. A generic function to cancel event bubbling example:
+\begin{verbatim}
+function stopBubble(e) {
+  if(e && e.stopPropagation) {
+    e.stopPropagation();
+  }else {
+    //Otherwise, we need to use the Internet Explorer
+    //Way of cancelling event bubbling
+    window.event.cancelBubble = true; 
+  }
+}
+\end{verbatim}
+The function takes a single argument: the event object passed into an event
+handler.
+
+Example:
+\begin{verbatim}
+//Locatem, and traverse, all the elements in the DOM
+var all = document.getElementsByTagName("*");
+for(var i = 0; i < all.length; i++) {
+  //Watch for when the user moves his mouse over the element
+  //and add a red border around the element
+  all[i].onmouseover = function(e) {
+    this.style.border = "1px solid red";
+    stopBubble(e);
+  };
+  //Watch for when the user moves back out of the element
+  all[i].onmouseout = function(e) {
+    this.style.border = "0px";
+    stopBubble(e);
+  };
+}
+\end{verbatim}
+\subsection{Overriding the Browser's Default Action}
+For most events that take place, the browser has some default action that will
+always occur. This action will always occur after both the capturing and teh
+bubbling event phases.
+
+Default actions can be summarized as anything that the browser does that you do
+not explicitly tell it to do. Here's a sampling of the different types of
+default actions that occur:
+\begin{itemize}
+\item Clicking an \verb|<a>| element redirect you to a URL provided in its href
+attribute
+\item Ctrl + S will attemp to save a physical representation of the site.
+\item Submitting an HTML \verb|<form>| will submit the query data to the
+specified URL and redirect the browser to that location.
+\item Moving your mouse over an \verb|<img>| with an alt or title attribute 
+\end{itemize}
+All of these actions are executed by the browser even if you stop the event
+bubbling or if you have no event handler bound at all.
+\begin{verbatim}
+function stopDefault(e) {
+  //Prevent the default browser (W3C)
+  if(e && e.preventDefault) {
+    e.preventDefault();
+  //A short cut for stoping the browser action in IE
+  }else{
+    window.event.returnValue = false;
+  }
+  return false;
+}
+\end{verbatim}
+\section{Binding Event Listeners}
+\subsection{Traditional Binding}
+It is by far the most compatible way of binding event handlers. To use this
+particular method, you attach a function as a property to the DOM element that
+you wish to watch:
+\begin{verbatim}
+//Find the first <form> element and attach a 'submit' event handler to it
+document.getElementByTagName("form")[0].onsubmit = function(e) {
+  return stopDefault(e);
+};
+//Attach a keypress event handler to the <body> element of the document
+document.body.onkeypress = myKeyPressHandler;
+//Attach an load event handler to the page
+window.onload = function() {...};
+\end{verbatim}
+\subsection{DOM Binding: W3C}
+The code for attaching a new handler funciton is simple. It exists as a function
+of every DOM element, named \verb|addEventListener| and takes three parameters:
+the name of the event, the function that will handle it, and a Boolean flag to
+enable or disable event capturing.
+\begin{verbatim}
+document.getElementByTagName("form")[0].addEventListener('submit',function(e) {
+  return stopDefault(e);
+}, false);
+document.body.addEventListener('keypress', myKeyPressHandler, false);
+widow.addEventListener('load',function(){....}, false);
+\end{verbatim}
+\subsection{addEvent and removeEvent}
+A sample piece of Code Using the addEvent Function:
+\begin{verbatim}
+//wait for the page to finish loading
+addEvent(window, "load", function() {
+  addEvent(document.body, "keypress",function(e) {
+    //If the user hits the Spacebar + Ctrl key
+    if(e.keyCode ==32 && e.ctrlKey) {
+      this.getElementByTagName("form")[0].style.display = 'block';
+      e.preventDefault();
+    }
+  });
+});
+\end{verbatim}
+The addEvent provides an incredibly simple but powerful way of working with DOM
+events. It becomes quite clear that this function can serve as a consistent and
+reliable way to deal with events.
+\begin{verbatim}
+// addEvent/removeEvent written by Dean Edwards, 2005
+// with input from Tino Zijdel
+// http://dean.edwards.name/weblog/2005/10/add-event/
+function addEvent(element, type, handler) {
+  // assign each event handler a unique ID
+  if (!handler.$$guid) handler.$$guid = addEvent.guid++;
+  // create a hash table of event types for the element
+  if (!element.events) element.events = {};
+  // create a hash table of event handlers for each element/event pair
+  var handlers = element.events[type];
+  if (!handlers) {
+    handlers = element.events[type] = {};
+    // store the existing event handler (if there is one)
+    if (element["on" + type]) {
+      handlers[0] = element["on" + type];
+    }
+  }
+  // store the event handler in the hash table
+  handlers[handler.$$guid] = handler;
+  // assign a global event handler to do all the work
+  element["on" + type] = handleEvent;
+};
+// a counter used to create unique IDs
+addEvent.guid = 1;
+function removeEvent(element, type, handler) {
+  // delete the event handler from the hash table
+  if (element.events && element.events[type]) {
+    delete element.events[type][handler.$$guid];
+  }
+};
+function handleEvent(event) {
+  var returnValue = true;
+  // grab the event object (IE uses a global event object)
+  event = event || fixEvent(window.event);
+  // get a reference to the hash table of event handlers
+  var handlers = this.events[event.type];
+  // execute each event handler
+  for (var i in handlers) {
+    this.$$handleEvent = handlers[i];
+    if (this.$$handleEvent(event) === false) {
+      returnValue = false;
+    }
+  }
+  return returnValue;
+};
+// Add some "missing" methods to IE's event object
+function fixEvent(event) {
+  // add W3C standard event methods
+  event.preventDefault = fixEvent.preventDefault;
+  event.stopPropagation = fixEvent.stopPropagation;
+  return event;
+};
+fixEvent.preventDefault = function() {
+  this.returnValue = false;
+};
+fixEvent.stopPropagation = function() {
+  this.cancelBubble = true;
+};
+\end{verbatim}
+\section{Types of Events}
+\begin{itemize}
+\item \emph{Mouse Events}: events that track where the mouse is and events that
+track where the mouse is clicking.
+\item \emph{Keyboard events}: Tracking when keyboard keys are pressed and within
+what context.
+\item \emph{UI events}: Track when users are utilizing one aspect of the page
+over another. With this you can reliably know when a user has begun input into a
+form element.
+\item \emph{Form events}: Relate directly to interactions that only occur with
+forms and form input elements.
+\item \emph{Loading and Error events}: relate to the \emph{page} itself,
+observing its load state. 
+\end{itemize}
+\chapter{JS and CSS}
+\section{Accessing Style Information}
+Your primary tool for both setting and getting the CSS properties of an element
+is its style property.(\verb|elem.style.height| for example). Note that any
+style information that you've preset using style sheets or inline CSS will not
+be reliably reflected in your style property.
+
+A function for Finding the Actual Computed Value of a CSS Property on an Element
+\begin{verbatim}
+// Get a style property (name) of a specific element (elem)
+function getStyle( elem, name ) {
+  // If the property exists in style[], then it's been set
+  // recently (and is current)
+  if (elem.style[name])
+    return elem.style[name];
+    // Otherwise, try to use IE's method
+  else if (elem.currentStyle)
+    return elem.currentStyle[name];
+    // Or the W3C's method, if it exists
+  else if (document.defaultView && document.defaultView.getComputedStyle) {
+    // It uses the traditional 'text-align' style of rule writing,
+    // instead of textAlign
+    name = name.replace(/([A-Z])/g,"-$1");
+    name = name.toLowerCase();
+    // Get the style object and get the value of the property (if it exists)
+    var s = document.defaultView.getComputedStyle(elem,"");
+    return s && s.getPropertyValue(name);
+    // Otherwise, we're using some other browser
+  } else
+    return null;
+}
+\end{verbatim}
+\section{Dynamic Elements}
+Fundamentally, there are three critical properties that are used to create
+dynamic effects: position, size, and visibility. Using these three properties
+you can simulate most common UI in modern web browser.
+\subsection{An Element's Position}
+In CSS, elements are positioned using offsets. The measurement used is the
+amount of offset from the top-left corner of an element's parent.
+
+Different layouts for the site:
+\begin{itemize}
+\item \emph{Static Positioning}: Default way, follows the normal flow of the
+document.
+\item \emph{Relative positioning}:This means the positioning is very similar to
+static positioning, as the element will continue to follow the normal flow of
+the document until instructed to do otherwise.
+\item \emph{Absolute positioning}: Positioning an element absolutely completely
+breaks it out of the normal flow of page layout.
+\item \emph{Fixed Positioning}: Positioning an element relative to the browser
+window. 
+\end{itemize}
+\subsubsection{Getting the Position}
+All mordern browsers support the following three properties:
+\begin{itemize}
+\item \emph{offsetParent}: Theoretically, this is the parent that an element is positioned within.
+\item \emph{offsetLeft and offsetTop}: These parameters are the horizontal and
+vertial offests of the element within the contex of the offsetParent. 
+\end{itemize}
+\subsubsection{Setting the Position}
+Setting the position is much less flexible. But when used in combination with
+the various means of layout, you can achieve comparable and usable, results.
+
+Currently, the only way to adjust the position of an element is through the
+modification of its CSS properties. You will only modify the left and top
+properties, even though other properties exist.
+\subsection{An Element's Size}
+The trickiness arrives when you try to do two things: first, when you want to
+get the full height of an element that has a predefined height. and second, when
+an element has a display of none, you can't get that value. Both of these
+problems arise when you attempt to perform animations. You start the animation
+of an object at 0 pixels (and possibly already hidden with a display of none)
+and you need to expand the height of the element to its full potential.
+
+This is done by accessing the clientWidth and clientHeight properties, which
+provide the total possible area that an element that an element is capable of
+scrolling to. 
+
+Two Functions for Finding the Full Potential Height or Width of an Element, Even If the Element Is Hidden
+\begin{verbatim}
+// Find the full, possible, height of an element (not the actual,
+// current, height)
+function fullHeight( elem ) {
+  // If the element is being displayed, then offsetHeight
+  // should do the trick, barring that, getHeight() will work
+  if ( getStyle( elem, 'display' ) != 'none' )
+    return elem.offsetHeight || getHeight( elem );
+    // Otherwise, we have to deal with an element with a display
+    // of none, so we need to reset its CSS properties to get a more
+    // accurate reading
+    var old = resetCSS( elem, {
+      display: '',
+      visibility: 'hidden',
+      position: 'absolute'
+    });
+    // Figure out what the full height of the element is, using clientHeight
+    // and if that doesn't work, use getHeight
+    var h = elem.clientHeight || getHeight( elem );
+    // Finally, restore the CSS properties back to what they were
+    restoreCSS( elem, old );
+    // and return the full height of the element
+    return h;
+}
+// Find the full, possible, width of an element (not the actual,
+// current, width)
+function fullWidth( elem ) {
+  // If the element is being displayed, then offsetWidth
+  // should do the trick, barring that, getWidth() will work
+  if ( getStyle( elem, 'display' ) != 'none' )
+    return elem.offsetWidth || getWidth( elem );
+    // Otherwise, we have to deal with an element with a display
+    // of none, so we need to reset its CSS properties to get a more
+    // accurate reading
+    var old = resetCSS( elem, {
+      display: '',
+      visibility: 'hidden',
+      position: 'absolute'
+    });
+    // Figure out what the full width of the element is, using clientWidth
+    // and if that doesn't work, use getWidth
+    var w = elem.clientWidth || getWidth( elem );
+    // Finally, restore the CSS properties back to what they were
+    restoreCSS( elem, old );
+    // and return the full width of the element
+    return w;
+}
+// A function used for setting a set of CSS properties, which
+// can then be restored back again later
+function resetCSS( elem, prop ) {
+  var old = {};
+  // Go through each of the properties
+  for ( var i in prop ) {
+    // Remember the old property value
+    old[ i ] = elem.style[ i ];
+    // And set the new value
+    elem.style[ i ] = prop[i];
+  }
+  // Retun the set of changed values, to be used by restoreCSS
+  return old;
+}
+// A function for restoring the side effects of the resetCSS function
+function restoreCSS( elem, prop) {
+// Reset all the properties back to their original values
+for ( var i in prop )
+  elem.style[ i ] = prop[i];
+}
+\end{verbatim}
+\subsection{An Element's Visibility}
+The visibility of an element is a powerful tool that can be used in JS to create
+everything from animations and effects to fast templating.
+
+Within CSS there are two different ways of effectively hiding an elemnt from
+view;
+\begin{itemize}
+\item The visibility property toggles whether an element is visible or not,
+while still leaving its normal flow properties inact. The visibility property
+  has two values: visible and default.
+\item The display property provides more options to a developer for controlling
+the layout of an element. The result of setting a display property on an element
+looks exactly the same as if you had just removed the element from ddocument; 
+\end{itemize}
+\section{Animations}
+\subsection{Slide In}
+Take a hidden element (hidden using a display property of none) and instead of
+using the harsh show() function to reveal it, you gradually expose it by
+increasing its height over the course of a second
+\begin{verbatim}
+function slideDown( elem ) {
+  // Start the slide down at
+  elem.style.height = '0px';
+  0
+  // Show the element (but you can see it, since the height is 0)
+  show( elem );
+  // Find the full, potential, height of the element
+  var h = fullHeight( elem );
+  // We're going to do a 20 'frame' animation that takes
+  // place over one second
+  for ( var i = 0; i <= 100; i += 5 ) {
+    // A closure to make sure that we have the right 'i'
+    (function(){
+      var pos = i;
+      // Set the timeout to occur at the specified time in the future
+      setTimeout(function(){
+        // Set the new height of the element
+        elem,.style.height = ( pos / 100 ) * h ) + "px";
+      }, ( pos + 1 ) * 10 );
+    })();
+  }
+}
+\end{verbatim}
+\subsection{Fade In}
+Very simliar to the first, but utilitzes the \verb|setOpacity()| function that you built instead of modifying the height.
+\section{The Browser}
+\subsection{Mouse Position}
+The first two variables that you need to detect are the \verb|x| and \verb|y|
+positions of a cursor, relative to an entire web page. Since it's only possible
+to get the current mouse coordinates from a mouse event, you'll end up needing
+to use a common mouse event to capture them, such as MouseMove or MouseDown
+\subsection{The Viewport}
+The \emph{viewport} of the browser can be thought of as everything inside the
+scrollbars of the browser.  The viewport additionally contains a few
+componeents: the viewport window, the page, and the scrollbars. 
+\section{Creating Custom Animations with jQuery}
+In addition to the pre-built effect methods, jQuery provides \verb|.animate|
+method that allows us to create our own custom anitmations with find-grained
+control.
+
+The \verb|.animate()| mehtod comes in two forms, the first:
+\begin{enumerate}
+\item A map of style properties and values
+\item An optional speed
+\item An optional easing type
+\item An optional callback function
+\end{enumerate}
+\begin{verbatim}
+.animate({property1:'value1', property2:'value2'},
+  speed, easing, function() {
+    alert('The animation is finished');
+  }
+\end{verbatim}
+
+The second form:
+\begin{verbatim}
+.animate({
+  property1:'value1',
+  property2:'value2',
+}, {
+  duration: 'value',
+  easing:'value', 
+  specialEasing:{
+    property1:'easing1',
+    property1:'easing2'
+  },
+  complete:function(){
+    alert('The animation is finised');
+  },
+  queue:true,
+  step:callback
+});
+\end{verbatim}
+The \verb|.animate()| method provides convient shorthand values for CSS
+properties:show, hide and toggle, to easy the way when we want to emulate the
+behavior of pre-packaged effect methods. With \verb|.animate|, we can modify any
+combination of properties simultaneously.
+\section{Positioning with CSS}
+When working with \verb|.animate()|, it is important to keep in mind the
+limtations that CSS imposes on the elements that we wish to change.
+
+The default CSS position for all block-level elements is \verb|static|, which
+accurately describes how those elements will remain if we try to move them
+without first changing their \verb|position| value.
+
+
+\end{document}
+

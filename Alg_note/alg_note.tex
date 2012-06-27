@@ -1,0 +1,573 @@
+\documentclass[a4paper,11pt]{book}
+\usepackage{parskip}
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\topmargin -1.5cm
+\oddsidemargin -0.04cm
+\evensidemargin -0.04cm
+\textwidth 16.59cm
+\textheight 25cm
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\author{LI Tao}
+\title{Introduction to Algorithm notes}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\chapter{Divide and Conquer}
+\section{The Master Theorem}
+\begin{theorem}
+Let $a\geq 1 and b>1$ be constants, let $f(n)$ be a function, and let $T(n)$ be defined on teh nonnegative integers by the recurrence
+\[T(n) = aT(n/b)+f(n),\]
+Where we intepret $n/b$ to mean either $\lfloor n/b\rfloor$ or $\lceil n/b\rceil$. Then $T(n)$ has the following asymptotic bounds:
+\begin{enumerate}
+\item If $f(n)=O(n^{log_b{a-\epsilon}})$ for some constant $\epsilon >0$, then $T(n) = \Theta (n^{log_ba})$
+\item If $f(n)=\Theta(n^{log_ba})$ then $T(n)=\Theta(n^{log_ba} lgn)$
+\item If $f(n)=\Omega(n^{log_ba+\epsilon})$ for some constant $\epsilon > 0$, and if $af(n/b) \leq cf(n)$ for some constant $c<1$ and all sufficiently large n, then $T(n)=\Theta(f(n))$. 
+\end{enumerate}
+\end{theorem}
+
+In each of the cases, we compare the function $f(n)$ with the function $n^{log_ba}$. Intuitively, \emph{the larger of the two functions determines the solution to the recurrence}. For case 2, the two functions are the same size, we multiply by a logarithmic factor.
+\section{Proof the master therom}
+Two parts to proof the therom:
+\begin{enumerate}
+\item Analyze in under the assumption that $T(n)$ is defined only on exact powers of $b>1$.
+\item Extend analysis to all positive integers n.
+\end {enumerate}
+\subsection{Proof for exact powers}
+\begin{lemma}
+Let $a\leq 1$ and $b>1$ be constants, and let $f(n)$ be a nonnegative function defined on exact powers of b. Define $T(n)$ on exact powers of b by the recurrence
+\[T(n)=\begin{cases}
+\Theta(1) & if n=1,\\
+aT(n/b) + f(n) & if n = b^i,
+\end{cases}\]
+Where $i$ is a positive integer. Then
+\[T(n) = \Theta(n^{log_ba})+\sum_{j=0}^{log_bn-1}(n/b^j)\]
+\end{lemma}
+\begin{proof}
+This can be proved by recursion tree. In general, there are $a^j$ nodes at depth 2, and each of the $a$ children has cost $f(n/b^j)$. The cost of each leaf is $T(1)=\Theta (1)$, and each leaf is at depth $log_bn$, since $n/b^{log_bn}=1$, There are $a^{log_bn}=1$ leaves in the tree. So the cost of all internal nodes is:
+\[ \sum^{log_bn-1}_{j=0}a^jf(n/b^j)\]
+
+In the underlying divide-and-conquer algorithm, this sum represents the costs of dividing problems into subproblems and then recombining the subproblems.
+
+The cost of all the leaves, which is the cost of doing all $n^{log_ba}$ subproblmes of size 1 is $\Theta(n^{log_ba})$.
+\end{proof}
+\begin{lemma}
+Let $a \geq 1$ and $b > 1$ be constants, and let $f(n)$ be a nonnegative function defined on exact powers of b. A function $g(n)$ defined over exact powers of $b$ by \[g(n) = \sum^{log_bn-1}_{j=0}a^jf(n/b^j) \]
+has the following property:
+\begin{enumerate}
+\item If $f(n)=O(n^{log_ba-\epsilon})$ for some constant $\epsilon > 0$, then $g(n)=O(n^{log_ba})$.
+\item If $f(n)=\Theta(n^{log_ba})$ then $g(n)=\Theta(n^{log_ba} lgn)$
+\item If $af(n/b)\leq cf(n)$ for some constant $c<1$ and all sufficiently large n, then $g(n)=\Theta(f(n))$. 
+\end{enumerate}
+\end{lemma}
+\begin{lemma}
+Let $a\geq 1$ and $b>1$ be constants, and let $f(n)$ be an nonnegative function defined on exact power of $b$. Define $T(n)$ on exact powers of $b$ by recurrence
+\[T(n) =\begin{cases}
+\Theta(1) & if n=1,\\
+aT(n/b)+f(n) & if n=1,
+\end{cases}\]
+Where $i$ is a positive integer. Then $T(n)$ has the following asympotic bounds for exact power of b:
+\begin{enumerate}
+\item If $f(n)=O(n^{log_b{a-\epsilon}})$ for some constant $\epsilon >0$, then $T(n) = \Theta (n^{log_ba})$
+\item If $f(n)=\Theta(n^{log_ba})$ then $T(n)=\Theta(n^{log_ba} lgn)$
+\item If $f(n)=\Omega(n^{log_ba+\epsilon})$ for some constant $\epsilon > 0$, and if $af(n/b) \leq cf(n)$ for some constant $c<1$ and all sufficiently large n, then $T(n)=\Theta(f(n))$. 
+\end{enumerate}
+\end{lemma}
+\subsection{Floors and ceilings}
+To complete the proof of the master theorem, we must now extend our analysis to the situation in which floors and ceiling appear in the master recurrence.
+\chapter{Red-Black Trees}
+\section{Properties of red-black trees}
+\begin{enumerate}
+\item Every node is either red or black
+\item The root is black.
+\item Every leaf(NIL) is black.
+\item If a node is red, then both its children are black.(No two red nodes together).
+\item For each node, all simple paths from the node to descendant leaves contain the same number of black nodes.
+\end{enumerate}
+\begin{lemma}
+A red-black tree with n internal nodes has height at most $2lg(n+1)$.
+\end{lemma}
+\begin{proof}
+Prove by induction.
+\end{proof}
+\section{Rotation}
+We do a left rotation on a node x, we assume that its right child y is not \verb|T.nil|; x may be any node in the tree whose right child is not \verb|T.nill|
+\begin{verbatim}
+LEFT-ROTATE(T,x)
+1   y=x.right               //set y
+2   x.right = y.left        //turn y's left subtree to into x's right subtree
+3   if y.left != T.nil
+4       y.left.p = x
+5   y.p = x.p               //link x's parent ot y
+6   if x.p == T.nil
+7       T.root = y
+8   elseif x == x.p.left
+9       x.p.left = y
+10  else x.p.right=y
+11  x.left = x              //put x on y's left
+12  x.p = y
+\end{verbatim}
+\section{Insertion}
+The call \verb|RB-INSERT(T,z)| inserts node z, whose key is assumed to have already been filled in, into the red-black tree T.
+\begin{verbatim}
+RB-INSERT(T,z)
+1   y = T.nil
+2   x = T.root
+3   while x!=T.nil
+4       y = x
+5       if z.key < x.key
+6            x = x.left
+7       else x = x.right
+8   z.p == y
+9   if y == T.nil
+10      T.root = z
+11  elseif z.key < y.key
+12      y.left = z
+13  else y.right = z
+14  z.left = T.nil
+15  z.right = T.nil
+16  z.color = RED
+17  RB-INSERT-FIXUP(T,z)
+\end{verbatim}
+Because coloring z red may cause a violation of one of the red-black properties, we call \verb|RB-INSERT-FIXUP(T,z)| in line 17 of RB-INSERT to restore the red-black property.
+\begin{verbatim}
+RB-INSERT-FIXUP(T,z)
+1   while z.p.color == RED                                     //case 1
+2       if z.p == z.p.p.left
+3           y = z.p.p.right
+4           if y.color == RED
+5               z.p.color = BLACK
+6               y.color = BLACK
+7               z.p.p.color = RED
+8               z = z.p.p                                      //case 2
+9           else if z == z.p.right
+10                  z = z.p
+11                  LEFT- ROTATE(T,z)
+12              z.p.color = BLACK                              //case 3
+13              z.p.p.color = RED
+14              RIGHT-ROTATE(T,z.p.p)
+15    else(same as then cluse
+                with "right" and "left" exchanged)
+16    T.root.color = BLACK
+\end{verbatim}
+The properties that might be violated upon the call to RB-INSERT-FIXUP:
+\begin{itemize}
+\item property 2, which requires the root to be black. (Violated if z is the root).
+\item property 4, red node cannot have a red child.(Violated if z's parent is red).
+\end{itemize}
+\paragraph{Case 1: z's uncle y is red} Only recolor is needed. We color both z.p and y black, and z.p.p red. Then we repeat the while loop with z.p.p as then new node z.
+\paragraph{Case 2: z's uncle y is black and z is a right child \\ Case 3: z's uncle y is black and z is a left child}
+A left rotation on z in case 2 may lead to case 3.
+A right rotation on z in case 3 and recoloring may fix up properties.
+\chapter{Graph}
+\section{Breadth-first Search}
+Given a graph $G = (V,E)$ and a distinguished \textbf{source} vertex $s$, BFS
+systematically explores the edges of $G$ to "discover" every vertex that is
+reachable from $s$. 
+\begin{itemize}
+\item It computes the distance (smallest number of edges) from $s$ to each
+reachable vertex.
+\item Produces a "breadth-first tree" with root $s$ that contains all the
+reachable vertices.
+\end{itemize}
+
+BFS expands the frontier between discovered and undiscovered vertices uniformly
+across the breadth of the frontier. 
+
+That is the alg discovers all vertices at distance $k$ form $s$ before
+discovering any vertices at distance $k+1$.
+
+BFS constructs a breadth-first tree, initially containing only its root, which
+is the source vertex $s$. Whenever the search discovers a white vertex $v$ in
+the course of scanning the adjacency list of an alrady discovered vertex $u$,
+the vertex $v$ and the edge $(u,v)$ are added to the tree. We said that $u$ is
+the \textbf{predecessor} or \textbf{parent} of $v$ in de BF-tree.
+
+Algorithm(Use a FIFO queue):
+\begin{tabbing}
+\hspace{.8cm}\=\hspace{.8cm}\=\hspace{.8cm}\=\\
+1\>\textbf{for} each vertex $u\inG.V-\{s\}$\\ 
+2\>\>$u.color = WHITE$
+3\>\>$u.d = \infty$\\
+4\>\>$u.\pi = NIL$\\
+5\>$s.color = GRAY$\\
+6\>$s.d = 0$\\
+7\>$s.\pi = NIL$\\
+8\>$Q = \emptyset$\\
+9\>ENQUEUE$(Q,s)$\\
+10\>\textbf{while} $Q\neq \emptyset$\\
+11\>\>$u = DEQUEUE(Q)$\\
+12\>\>\textbf{for} each $v\in G.Adj[u]$\\
+13\>\>\>\textbf{if} $v.color == WHITE$\\
+14\>\>\>\>$v.color = GRAY$\\
+15\>\>\>\>$v.d = u.d+1$\\
+16\>\>\>\>$v.\pi = u$\\
+17\>\>\>\>$ENQUEUE(Q,v)$\\
+18\>\>$u.color = BLACK$\\
+\end{tabbing}
+\subsection{Analysis}
+The total time devoted to queue operations is $O(V)$. 
+
+Because the procedure scans the adjacency list of each vertex of each vertex
+only when the vertex is dequeued, it scans each adjacency list at most once.
+Since the sum of the lengths of all the adjacency lists is $\Theta (E)$, the
+total time spent in scanning adjacency lists is $O(E)$. The overhead
+initialization is $O(V)$, and thus the total running time of the BFS procedure
+is $O(V+E)$. 
+
+Thus the BFS runs in \emph{time linear in the size of the adjacency-list
+representation of $G$.
+\subsection{Shortest Path}
+Define the \textbf{shortest-path distance} $\delta(s,v)$ from $s$ to $v$.
+\begin{lemma}
+Let $G=(V,E)$ be a directed or undirected graph, and let $s\in V$ be an
+arbitrary vertex. Then for any edge $(u,v)\in E$,
+\[\delta(s,v) \leq \delta(s,u) +1\]
+\end{lemma}
+\begin{proof} If $u$ is reachable from $s$, then so is $v$. In this case, the
+shortest path form $s$ to $v$ cannot be longer than the shortest path from $s$
+to $u$ followed by the edge $(u,v)$, and thus the inequality holds. If $u$ is
+not reachable from $s$, then $\delta (s,v) = \infty$, and the inequality holds.
+\end{proof}
+
+We want to show that BFS properly computes $\nu.d = \delta(s,\nu)$ for each
+vertex $\nu \in V$. We first show that $\nu.d$ bounds $\delta(s,\nu)$ from above.
+
+\begin{lemma}
+Let $G= (V,E)$ e a directed or undirected graph and suppose that BFS is run on
+$G$ from a given source vertex $s\in V$. Then upon termination, for each vertex
+$\nu \in V$, the value $\nu.d$ computed by BFS satisfies $\nu.d \geq
+\delta(s,v)$
+
+\begin{proof}
+Use induction. Inductive hypothesis is that $\nu.d \geq \delta(s,\nu)$ for all
+vertex $\nu \in V$.
+
+Basis:$s.d = 0 = \delta (s,s)$ and $\nu.d = \infty \geq \delta(s,v)$ for all
+$\nu \in V - \{s\}$
+
+Inductive step,consider a white vertex $\nu$ that is discovered during the
+search from a vertex $u$. The inductive hypothesis implies that $u.d\geq
+\delta(s,u)$
+\[\begin{split}
+\nu.d & = u.d+1\\
+      & \geq \delta(s,u)+1\\
+      & \geq \delta(s,v)
+\end{split}\]
+
+Vertex $\nu$ is then enqueued, and ti is never enqueued again because it is also
+grayed and tehn clause of lines 14-17 is executed only for white certices. Thus
+the value of $\nu.d$ never changes again, and the inductive hypothesis is
+maintained.
+\end{proof}
+
+The next lemma shows that at all times, the queue holds at most two distinct $d$
+values.
+\begin{lemma}
+Suppose that during the execution of BFS on a graph $G=(V,E)$, the queue $Q$
+
+\section{Minimum Spanning Trees}
+A connected undirected graph $G = (V, E)$, where V is the set of pins. E is the set of possible interconnections betweeen pairs of pins, and for each edge $(u,v)\in E$, we have a weight $w(u, v)$ specifying the cost to connect u and v. We then wish to find an acyclic subsect $T\subseteq E$ that connects all of the vertices and whose total weight:\[w(T) = \sum_{(u,v)\in T}w(u,v)\] is \emph{minimized}. Since T is \emph{acyclic and connects all of the vertices, it must form a tree}, which we call a \textbf{ spanning tree} since it "spans" the graph G.
+\subsection{Growing a minimum spanning tree}
+Assume that we have a connected, undirected graph $G = (V, E)$ with a weight function $w:E \rightarrow \mathbb{R}$, and we wish to find a minimum spanning tree.
+
+A generic method(greedy strategy):Grows the minimum spanning tree one edge at a time. maintaining the following loop invariant:
+\begin{center}
+Prior to each iteratrion, A is a subset of some minimum spanning tree
+\end{center}
+
+At each step, we determine an edge $(u, v)$ that we can add to A without violating this invariant, in the sense that $A\cup \{(u,v)\}$ is also a subset of minimun spanning tree. We call such an edge a \textbf{safe edge} for $A$.
+\begin{tabbing}
+\hspace{.8cm}\=\hspace{.8cm}\=\\
+GENERIC-MST(G, w)\\
+1\> A = empty\\
+2\> while A does not form a spanning tree\\
+3\>\>   find an edge $(u, v)$ that is safe for $A$\\
+4\>\> $A=A\cup \{u, v)\}$\\
+5\> return $A$\\
+\end{tabbing}
+
+The trick part is finding a safe edge in line 3. We first need some definitions:
+
+A \textbf{cut} $(S, V-S)$ of an undirected graph $G = (V, E)$ is partition of V, we say that an edge $(u,v) \in E$ \textbf{crosses} the cut $(S,V-S)$ if one of its endpoints is in $S$ and the other is in $V-S$. We say that a cut \textbf{respects} a set A of edges if no edge in $A$ crosses the cut. A edge is a \textbf{light edge} crossing a cut if its weight is the minimum of any edge crossing the cut. \\
+\begin{theorem}
+Let $G = (V, E)$ be a connected undirected graph with a real-valued weight function $w$ defined on $E$. Let $A$ be a subset of $E$ that is included in some MST for G. Let $(S, V-S)$ be any cut of $G$ that respects A, and let $(u,v)$ be a light edge crossing $(S, V-S)$. Then edge $(u, v)$ is safe for A
+\end{theorem}
+\begin{proof}
+Let $T$ be a minimum spanning tree that includes A, and assume that T does not
+contain the light edge $(u,v)$. We shall construct another MST $T'$ that
+includes $A\cup\{(u,v)\}$ by using a \textbf{cut-and-paste} technique.
+
+Let $(x,y)$ be the edge in $T$ lies on the simple path $p$ and also crosses the
+cut(It must have one since $v$ and $u$ are on the opposite of the cut $(S,V-S)$.
+The edge $(x,y)$ also not in $A$ because the cut respectes $A$.
+
+Since $(x,y)$ is on the unique simple path from $u$ to $v$ in $T$, removing
+$(x,y$ breaks $T$ into two components. Adding $(u,v)$ reconnects them into form
+a new spanning tree
+\begin{enumerate}
+\item Form a new tree: $T' = T- \{(x,y)\}\cup \{(u,v)\}$(Removing $(x,y)$ from T
+and adding $(u,v)$. A replacement.
+\item Show that $T'$ is a MST. (Since $w(u,v)\leq (x,y)$, by the fact that
+$(u,v)$ is a light edge.)
+\item Show that $(u,v)$ is actually a safe edge for $A$. That is $A\cup \{(u,v)\} \subseteq T'$
+\end{enumerate}
+\end{proof}
+At any point in the execution, the graph $G_A = (V, A)$ is a forest, and each of the connected compoents of $G_A$ is a tree. Moreover, any safe edge $(u,v)$ for A connects distinct compoents of $G_A$, since $A\cup \{(u,v)\}$ must be acyclic.
+
+The \textbf{while} loop in lines 2-4 of GENERIC-MST execute $|V|-1$ times because it finds one of teh $|V|-1$ edges of a minimumspanning tree in each iteration.
+
+\begin{corollary}
+Let $G=(V,E)$ be a connected, undirected graph with a real-value weight function $w$ defined on $E$. Let $A$ be a subset of $E$ hat is included in some MST for G, let $C=(V_C,E_C)$ be a connected component (tree) in the forest $G_A = (V,A)$. If $(u,v)$ is a light edge connecting $C$ to some other component in $G_A$, then $(u, v)$ is safe for A.
+\end{corollary}
+\subsection{The algorithm of Kruskal and Prim}
+\subsubsection{Kruskal's algorithm}
+Finds safe edge by finding an edge $(u,v)$ of least weight of all the edges that connect any two trees in the forest.
+
+The implementation uses a disjoint-set data structure to maintain several disjoint sets of elements. Each set contains the vertices in one tree of teh current forest.
+
+The operation FIND-SET(u) returns a representative element from the set that contains u. Thus we can determine whether two vertices u and v belong to the same treee by testing wether FIND-SET(u) equals FIND-SET(v).
+\begin{tabbing}
+\hspace{.8cm}\=\hspace{.8cm}\=\hspace{.8cm}\\
+MST-KRUSKAL$(G,w)$\\
+1 \> A=$\O$ \\
+2 \> \textbf{for} each vertex $v \in G.V$\\
+3 \>\> MAKE-SET($v$)\\
+4 \>sort the edges of $G.E$ into nondecreasing order by weight $w$\\
+5 \>\textbf{for} each edge $(u,v)\in G.E$, taken in non decreasing order by weight\\
+6 \>\> \textbf{if} FIND-SET($u$) $\neq$ FIND-SET($v$)\\
+7\>\>$A=A\cup \{(u,v)\}$\\
+8\>\>UNION$(u,v)$\\
+9 \>\textbf{return} $A$
+\end{tabbing}
+\begin{enumerate}
+\item Line 1-3 initialize the set $A$ to the empty set and create $|V|$ trees. One containing each vertex.
+\item the for-loop in line 5-8 examines edges in order of weight. It checks for each edge $(u,v)$, wether the endpoints $u$ and $v$ belong to the same tree.
+\item if $u$ and $v$ don't belong to the same set, the two vertices belong to different trees. So line 7 adds the edge $(u,v)$ to $A$, and line 8 merges the vertices in two trees.
+\end{enumerate}
+The running time of Kruskal's algorithm depends one how we implement the disjoint-set data structure.
+\subsubsection{Prim's algorithm}
+Prim's algorithm has the property that the edges in the set $A$ always form a single tree.
+
+The tree starts from an arbitrary root vertex $r$ and grows until the tree spans all the vertices in $V$. Each step adds to the tree $A$ a light edge that connects $A$ to an isolated vertex -- one on which no edge of $A$ is incident.
+
+We need a fast way to select a new edge to add to the tree formed by the edges in $A$: All vertice that are \emph{not} in the tree reside in a min-priority queue $Q$ based on a \emph{key} attribute. For each vertex $\nu$, the attribute $\nu.key$ is the minimum weight of any edge connecting $\nu$ to a vertex in the tree. $\nu.key = \infty$ if there is no such edge. The attribute $\nu.\pi$ names the parent of $\nu$ in the tree.
+\begin{tabbing}
+\hspace{.8cm}\=\hspace{.8cm}\=\hspace{.8cm}\=\hspace{.8cm}\=\\
+MST-PRIM$(G,w,r)$\\
+1\>\textbf{for} each $u\in G.V$\\
+2\>\>$u.key = \infty$\\
+3\>\>$u.\pi = NIL$\\
+4\>$r.key = 0$\\
+5\>$Q=G.V$\\
+6\>\textbf{while} $Q \neq \O$\\
+7\>\>$u =$ EXTRACT-MIN$(Q)$\\
+8\>\>\textbf{for} each $\nu \in G.Adj[u]$\\
+9\>\>\>\textbf{if} $\nu \in Q$ and $w(u,\nu) < \nu.key$\\
+10\>\>\>\>$\nu.\pi = u$\\
+11\>\>\>\>$\nu.key = w(u,\nu)$
+\end{tabbing}
+If we implement $Q$ as a binary min-heap, we can perform line 1-5 in $O(V)$ time. The body of the \textbf{while} loop executes $|V|$ times, and since the EXTRACT-MIN takes $O(\lg{V})$ time, the total time for the loop is $(V\lg{V})$. The \textbf{for} loop in lines 8-11 executes $O(E)$ times. Thus the total time \[O(V\lg{V} + E\lg{V})=O(E\lg{V})\]
+\section{Single-Source Shortest Path}
+In a \textbf{shortest-paths problem}, we are given a weighted, directed graph $G = (V, E)$, with the weight function $w : E\rightarrow\mathbb{R}$ mapping edges to real-valued weights. 
+\begin{tabbing}
+\hspace{.8cm}\=\hspace{.8cm}\=\hspace{.8cm}\=\hspace{.8cm}\=\\
+INITIALIZE-SINGLE-SOURCE$(G,s)$\\
+1\>\textbf{for} each vertex $\nu\in G.V$\\
+2\>\>$\nu.d=\infty$\\
+3\>\>$\nu.\pi = NIL$\\
+4\> $s.d = 0$
+\end{tabbing}
+The process of \textbf{relaxing} an edge $(u,v)$ consists of testing whether we can improve the shortest path to $v$ found so far by going through u and, if so, updating the $\nu.d$ and $\nu.\pi$.
+\begin{tabbing}
+\hspace{.8cm}\=\hspace{.8cm}\=\hspace{.8cm}\=\\
+RELAX$(u,\nu,w)$\\
+1\>\textbf{if} $\nu.d>u.d +w(u,\nu)$\\
+2\>\>$\nu.d = u.d + w(u,\nu)$\\
+3\>\>$\nu.\pi = u$
+\end{tabbing}
+
+\subsection{The Bellman-Ford algorithm}
+The \textbf{Bellman-Ford algorithm} solves the single-source shortest-paths problem in the general case in which edge \emph{weights may be negative}.
+
+Given a weighted, directed graph $G= (V, E)$ with source $s$ and weight function $w : E \rightarrow \mathbb{R}$. The Bellman-Ford algorithm returns a boolean value indicating whether or not there is a negative-weight cycle that is reachable from the source. 
+\begin{tabbing}
+\hspace{.8cm}\=\hspace{.8cm}\=\hspace{.8cm}\=\\
+BELLMAN-FORD$(G,w,s)$\\
+1 \>INITIALIZE-SINGLE-SOURCE$(G,s)$\\
+2 \>\textbf{for} $i=1$ to $|G.V|-1$\\
+3 \>\>\textbf{for} each edge $(u,\nu)\in G.E$\\
+4 \>\>\>RELAX$(u,\nu,w)$\\
+5\> \textbf{for} each edge$(u,\nu)\in G.E$\\
+6\>\>\textbf{if} $\nu.d>u.d+w(u,v)$\\
+7 \>\>\>\textbf{return} FALSE\\
+8 \> \textbf{RETURN} TRUE
+\end{tabbing}
+Proving the correnctness of the algorithm. We start by showing that if there are no negative-weight cycles, the correct shortest-path weights for all vertices reachable from the source.
+
+\begin{lemma} Let $G=(V,E)$ be a weighted, directed graph source $s$ and weight function $w : E\rightarrow \mathbb{R}$, and assume that $G$ contains no negative-weight cycles that are reachable from the source $s$. Then after the $|V|-1$ iterations of the \textbf{for} loop of lines 2-4 of BELLMAN-FORD, we have $\nu.d = \delta(s,\nu)$ for all vertices $\nu$ that are reachable from $s$.
+\end{lemma}
+\begin{proof}
+Consider any vertex $\nu$ that is reachable from $s$, and let $p = \langle \nu_0, \nu_1, ...,\nu_k\rangle$, where $\nu_0 =s$ and $\nu_k =\nu$, be any shortest path fro $s$ to $\nu$.
+
+Because shortest path are simple, $p$ has at most $|V|-1$ edges, and so $k\leq|V|-1$. Each of the $|V|-1$ iterations of the \textbf{for} loop of lines 2-4 relaxes all $|E|$ edges. Among the edges relaxed in the $i$th iteration is $(\nu_{i-1}, \nu_i)$. By the path-relaxation property, $\nu.d = \nu_k.d=\delta(s,\nu_k)=\delta(s,\nu)$. 
+\end{proof}
+\begin{corollary}
+Let $G=(V,E)$ be a weighted, directed graph source $s$ and weight function $w : E\rightarrow \mathbb{R}$, and assume that $G$ contains no negative-weight cycles that are reachable from the source $s$. Then for each vertex $\nu \in $, there is a path from $s$ to $\nu$ if and only if BELLMAN-FORD terminates with $\nu.d <\infty$ when it is run on $G$.
+\end{corollary}
+
+\begin{lemma}\textbf{Correctness of the Bellman -Folrd Algorithm}\\
+Let BELLMAN-FORD be run on a weighted, directed graph $G=(V,E)$ with source $s$ and weight function $w : E \rightarrow \mathbb{R}$. If $G$ contains no negative-weight cycles that are reachable from $s$, then the algorithm returns true, we have $\nu.d = \delta(s,v)$ for all vertices $\nu \in V$, and the predessor subgraph $G_\pi$ is a shortest-paths tree rooted at $s$. If $G$ does not contain a negative-weight cycle reachable from $s$, then the algorithm returns FALSE.
+\end{lemma}
+\begin{proof}
+We first prove the claim that at termination, $\nu.d = \delta(s,v)$ for all vertices $\nu \in V$:
+\begin{itemize}
+\item If vertex $\nu$ is reachable from $s$, then Lemma 3.3 proves this claim.
+\item If $\nu$ is not reachable from $s$, then, the claim follows from the no-path property, thus, the claim is proven.
+\end{itemize}
+Now we use the claim to show that BELLMAN-FORD returns true:
+
+At termination we have for all edges $(u,v) \in E$:
+
+\[v.d = \delta(s,v) \leq \delta(s, u)+w(u, v) = u.d +w(u, v) \]
+
+So non of the tests in line 6 causes BF to return FALSE.
+
+Now suppose that graph $G$ contains a negative-weight cycle that is reachable from the source $s$, let this cycle be $c = \langle \nu_0, \nu_1,... \nu_k \rangle$, where $\nu_0 = \nu_k$, then
+\begin{equation}
+\sum_{i=1}^k w(\nu_{i-1}, \nu_i) <0
+\end{equation}
+
+Prove by controdiction:\\
+Assume that it returns true, then we have \[\nu_i.d \leq \nu_{i-1}.d + w(\nu_{i-1}, \nu_i) for i = 1, 2, ...k\]
+Summing the inequalities:
+\[\begin{split}
+\sum^k_{i=1} \nu_i.d &\leq \sum^k_{i=1}(\nu_{i-1}.d + w(\nu_i-1,\nu_i))\\
+                     &= \sum_{i=1}^k \nu_{i-1}.d +\sum^k_{i=1} w (\nu_{i-1},\nu{i}).
+\end{split}\]
+
+Since $\nu_0 = \nu_k$, each vertex in $c$ appears exactly once in each of the summations. so\[\sum_{i=1}^k \nu_i.d = \sum^k_{i=1} \nu_{i-1}.d.\]
+
+Moreover, by Corollary 3.4, $\nu_i.d$ is finite for $i = 1, 2, ..., k$, thus:
+\[0\leq \sum^k_{i=1} w(\nu_{i-1}, \nu_i), \]
+which contradicts inequality 3.1. 
+\end{proof}
+
+\subsection{Single-source paths in directed acyclic graphs}
+The algorithm starts by topologically sorting the dag(directed acyclic graphs) to impose a linear ordering on the vertices. If the dag contains a path from vertex $u$ to vertex $\nu$, then $u$ precedes $\nu$ in the topological sort. 
+
+We make just one pass over each vertex, we relax each edge that leaves the vertex:v
+\begin{tabbing}
+\hspace{.8cm}\=\hspace{.8cm}\=\hspace{.8cm}\=\\
+DAG-SORTEST-PATH$(G,w,s)$\\
+1\>topologically sort the vertices of $G$\\
+2\>INITIALIZE-SINGLE-SOURCE$(G,s)$\\
+3\>\textbf{for} each vertex $u$, taken in topologically sorted order\\
+4\>\>\textbf{for} each vertex $\nu\in G.Adj[u]$\\
+5 \>\>\>RELAX$(u, v, w)$
+\end{tabbing}
+\subsection{Dijkstra's algorithm}
+Solves the single-source shortest-paths problem on a weigted directed graph $G=(V,E)$ for the case in which \emph{all edge weights are nonnegative}
+
+The algorithm repeatly selects the vertex $u \in V - S$ with the minimum shortest-path estimate, adds $u$ to $S$, and relaxex all edges leaving $u$. We use a min-priority queue $Q$ of verties, keyed by their $d$ value.
+
+\begin{tabbing}
+\hspace{.8cm}\=\hspace{.8cm}\=\hspace{.8cm}\=\\
+DIJKSTAR$(G,w,s)$\\
+1\>INITIALIZE-SINGLE-SOURCE$(G,s)$\\
+2\>$S = \emptyset$\\
+3\>$Q = G.V$\\
+4\>\textbf{while} $Q\neq \emptyset$\\
+5\>\>$u = EXTRACT-MIN(Q)$\\
+6\>\>$S = S \cup \{u\}$\\
+7\>\>\textbf{for} each vertex $v \in G.Adj[u]$\\
+8\>\>\>RELAX$(u,v,w)$
+\end{tabbing}
+The algorithm maintains the invariant that $Q = V - S$ at the start of each iteration of the \textbf{while} loop of lines 4-8. Each time through the loop, line 5 extracts a vertex $u$ from $Q = V - S$ and line 6 adds it to set $S$.
+
+Because Dijikstra's algorithm always choose the "lightest" or "closest" vertex in $V-S$ to add to set S, we say that it uses greedy strategy. 
+
+To show Dijkstra's algorithm does indeed compute shortest paths, the key is to show that each time it adds a vertex $u$ to set $S$, we have $u.d = \delta(s,u)$
+
+\begin{theorem}\textbf{Correctness of Dijkstra's algorithm}\\
+Dijkstra's algorithm, run on weighted, directed graph $G = (V, E)$ with nonnegative weight function $w$ and source $s$, terminates with $u.d = \delta(s, u)$ for all vertices $u \in V$.
+\end{theorem}
+\begin{proof}
+We use the following loop invariant:\\
+At the start of each iteration of the \textbf{while} loop of lines 4-8, $\nu.d = \delta(s,\nu)$.\\
+\begin{enumerate}
+\item \textbf{Initialization}: $S=\emptyset$, so true.
+\item \textbf{Maintenance}:\\Wish to show:$u.d=\delta(s,u)$ for vertex added to set $S$.\\Let $u$ be the first vertex for which $u.d\neq \delta(s,u)$ when it is added to S.\\Let $p$ be a shortest path from $s$ to $u$.\\Prior to adding $u$ to $S$, path $p$ connects a vertex in $S$.\\Let $y$ be the first vertex along $p$ such that $y\in V-S$, and let $x\in S$ be $y$'s first predecessor along $p$. \\We claim that $y.d = \delta(s,y)$ when $u$ is added to $S$. To prove this claim, observe that $x\in S$. Then because we chose $u$ as the first vertex for which $u.d \neq \delta(s,u)$ when it is added to $S$, we had $x.d = \delta(s,x)$ when $x$ was added to $S$. Edge $(x,y)$ relaxed at that time, and the claim follows from the convergence property.\\Now can obtain a contradiction to prove that$u.d = \delta(s,u)$. Because $y$ appears before $u$ on a shortest path and all edge weights are nonnegative, we have $\delta(s, y) \leq \delta(s,u)$, and thus
+\begin{equation}
+\begin{split}
+y.d & = \delta(s,y)\\&\leq \delta(s,u)\\&\leq u.d   (by the upper-bound property).
+\end{split}
+\end{equation}
+But because both vertices $u$ and $y$ were in $V-S$ when $u$ was chosen, we have $u.d\leq y.d$. Thus
+\[y.d=\delta(s,y)=\delta(s,u)=u.d\]
+Consequently, $u.d = \delta(s,u)$, which controdicts our choice of $u$.
+\item \textbf{Termination}:At termination, $Q\neq \emptyset$ which, along with our earlier invariant that $Q=V-S$, implies that $S=V$. Thus $u.d=\delta(s,u)$ for all vertices $u\in V$.
+\end{enumerate}
+\end{proof}
+\section{All-Pairs Shortest Paths}
+We assume that the vertices are numbered $1,2,...,|V|$, so that the input is an $n\times n$ matrix $W$ representing the edge weights of an $n$-vertex directed graph $G=(V,E)$. That s, $W = (W_{ij})$, where:
+\begin{equation}
+W_{ij}=\begin{cases} 0 & if i=j,\\the\ weight\ of\ directed\ edge\ (i,j)\ & if\ i\neq j\ and\ (i, j)\in E,\\
+\infty & if i \neq j\ and\ (i,j) \notin E. \end{cases}
+\end{equation}
+The output of the all-pairs shortest-paths algorithms presented in this chapter is an $n\times n$ matrix $D=(d_{ij})$, where entry$d_{ij}$ contains the weight of a shortest path from vertex $i$ to vertex $j$.
+
+To solve the all-pairs shortest-paths problem on an input adjacency matrix, we need to compute not only the shortest-path weights but also a \textbf{predecessor matrix}$\prod = (\pi_{ij})$, where $\pi_{ij}$ is NIL if either $i = j$ or there is no path from $i$ to $j$, and otherwise $\pi_{ij}$ is the predecessor of $j$ on some shortest path from $i$.
+
+The subgraph induced by the $i$th row of the $\prod$ matrix should be a shortest-paths tree with root $i$. 
+
+For each vertex $i\in V$, we define the \textbf{predecessor subgraph} of $G$ for $i$ as $G_{\pi,i} = (V_{\pi,i},E_{\pi,i})$, where\[V_{\pi,i} = \{j\in V:\pi_{ij} \neq NIL\}\cup \{i\}\] and \[E_{\pi,i} = \{(\pi_{ij}:j \in V_{\pi,i}-\{i\}\}\].
+
+Then:
+\begin{tabbing}
+\hspace{.8cm}\=\hspace{.8cm}\=\hspace{.8cm}\=\\
+PRINT-ALL-PAIRS-SHORTEST-PATH$(\prod,i,j)$\\
+1\>\textbf{if} $i==j$\\
+2\>\>print $i$\\
+3\>\textbf{elseif} $\pi_{ij} == NIL$\\
+4\>\>print "no path"\\
+5\> \textbf{else} PRINT-ALL-PAIRS-SHORTEST-PATH$(\prod,i,\pi_{ij})$\\
+6\>\>print $j$
+\end{tabbing}
+
+\subsection{A recursive solution}
+Let $l_{ij}^(m)$ be the minimum weight of any path from vertex $i$ to vertex $j$ that contains at most $m$ edges. Thus:
+\[l_{ij}^(0) = \begin{cases} 0 & if\ i = j\\\infty & if\ i\neq j\end{cases}\]
+For $m \geq 1$, we compute $l_{ij}^{(m)}$ as the minimum of $l_{ij}^{(m-1)}$
+\begin{equation}
+\begin{split}
+l_{ij}^{(m)} &= \min(l_{ij}^{(m-1)}, \min_{1\leq k \leq n}\{l_{ik}^{(m-1)}+w_{kj}\})\\
+             &= \min_{1\leq k \leq n}\{l_{ik}^{(m-1)} + w_{kj}\}
+\end{split}
+\end{equation}
+If the graph contains no negative-weight cycles, then for every pair of vertices $i$ and $j$ for which $\delta(i,j) < \infty$, there is a shortest path from $i$ to $j$ that is simple and thus contains at most $n-1$ edges. 
+\paragraph{Note} A path from vertex $i$ to vertex $j$ with more thatn $n-1$ edges cannot have lower weight than a shortest path from $i$ to $j$. The actual shortest-path weights are therefore given by \begin{equation}\delta(i,j) = l_{ij}^{(n-1)} = l_{ij}^{(n)}=l_{ij}^{(n+1)}...\end{equation}
+
+\subsection{Computing the shortest-path weights bottom up}
+Taking our input the matrix $W=(w_{ij})$, we now compute a series of matrices $L^{(1)},L^{(2)},...,L^{(n-1)}$, where for $m =1,2,...,n-1$,we have $L^{(m)}=(l_{ij}^{(m)})$. The final matrix $L^{(n-1)}$ contains the actual shortest-path weights. 
+
+The heart of the algorithm is the following:
+\begin{tabbing}
+\hspace{.8cm}\=\hspace{.8cm}\=\hspace{.8cm}\=\hspace{.8cm}\=\\
+EXTEND-SHORTEST-PATHS$(L,W)$\\
+1\> $n = L.rows$\\
+2\>let $L' = (l'_{ij})$ be a new $n \times n$ matrix.\\
+3\>\textbf{for} $i=1$ to $n$\\
+4\>\>\textbf{for} $j=1$ to $n$\\
+5\>\>\>$l'_{ij} = \infty$\\
+6\>\>\>\textbf{for} $k=1$ to $n$\\
+7\>\>\>\>$l'_{ij} = \min(l'_{ij},l_{ik}+w_{kj}$\\
+8\>\textbf{return} $L'$
+\end{tabbing}
+\end{document}

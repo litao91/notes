@@ -1,0 +1,343 @@
+\documentclass[a4paper,12pt]{book}
+\usepackage{parskip}
+\usepackage[top=2.5cm, left=1cm, right=1cm, bottom=1.5cm]{geometry}
+\begin{document}
+\chapter{Introduction}
+\section{Overview}
+Current standard speficy an API, a well defined environment in which user
+application should run. The standards do not impose any restriction on internal
+design choices of a compliant kernel.
+
+An accessment of linux competes against some well-known commercial Unix kernels:
+\begin{itemize}
+\item The Linux Kernel is monolithic. 
+\item Linux's support for modules is very good, since it is able to
+automatically load and unload modules on demand. 
+\item Kernel threadng: a kernel thread is an execution context that can be
+independently scheduled; it may be assiociated with a user program, or it may
+run only some kernel functions. Context switches between kernel threads are
+usually much less expensive than context switches between ordinary processes,
+since the former usually operate on a common address space. Linux uses kernel
+threads in a very limited way to execute a few kernel functions periodically;
+since Linux kernel threas cannot execute user programs, they do no trepresent
+the basic execution contex abstraction. 
+\item Multithreaded application support: Uwer programs that are well designed in
+terms of many relatively independent execution flows sharing a large portion of
+the application data structures. A multithreaded user application could be
+composed of many \emph{lightweight processes} (LWP), or processes that can
+operate on a common address space, common physicaly memory pages, common opened
+files, and so on. Linux regards lightweight processes as the basic execution
+context and handles them via the nonstandard \verb|clone()| system call.
+\item Linus is an nonpreemptive kernel. This means that linux cannot arbitrarily
+interleave execution flows while they are in privileged mode. Several sections
+of kernel code assume they can run and modify data structures without fear of
+being interrupted and having another thread alter those data structures. 
+\item Multiprocessor support
+\item Filesystem
+\end{itemize}
+\section{Hardware Dependency}
+Linux tries to maintain a neat distinction between hardware-dependent and
+hardware-independent source code. To that end, both the \emph{arch} and the
+\emph{include} directories include nine subdirectories corresponding to the nine
+hardware platforms supported. 
+\section{Linux Versions}
+Linux distinguishes stable kernel from development kernels throug a numbering
+scheme. Each version is characterized by three numbers, separated by period. The
+first two are used to identify the version, teh third number identifies the
+release. If the second number is even, it denotes a stable kernel.
+
+\chapter{Hardware Basics}
+\section{CPU}
+The processor's execution is governed by an external clock. This clock, the
+system clock, generates regular clock pulses to the processor and, at each clock
+pulse, the processor does some work. For example, a processor could execute an
+instruction every clock pulse. 
+
+The instructions have to be fetched from memory as they are executed.
+Instructions may temselves reference data within memory and that data must be
+fetched from memory and saved there when appropriate. 
+
+Most processors have the following special purpose registers:
+\begin{description}
+\item[Program Counter] Contains the address of the next instruction to be
+executed. Automatically incremented each time an instruction is fetched.
+\item[Stack Pointer] The stack is a way of easily saving and restoring temporary
+values in external memory. Usually processors have special instructions which
+allow you to push values onto the stack and to pop them off again later. 
+\item[Processor Status] Instructions may yield results. The PS register holds
+this and other information aobut the current state of the processor. For
+example, most processor have at least two modes of operation, kernel and user.
+the PS register would hold information identifying the current mode.
+\end{description}
+\chapter{Memory Management}
+The memory management subsystem provides:
+\begin{description}
+\item[Large Address Space] The operating system makes the system appear as if it
+has a larger amount of memory than it actually has. 
+\item[Protection] Each process int eh system has its own virtual address space.
+These virtual address spaces are completely separate from each other and so a
+process running one application cannot affect another. Also, the hardware
+virutal memory mechanisms allow ares of memory to be protected against writing.
+\item[Memory Mapping] Used to map image and data file into a processes address
+space. In memory mapping, the contents of a file are linked directly into the
+virtual address space of a process.
+\item[Fair Physical Memory Allocation] The memory management subsystem allows
+each running process in the system a fair share of the physical memory of the
+system.
+\item[Shared Virtual Memory]
+There are times when you need processes to share memory.
+\end{description}
+\section{An abstract Model of Virtual Memory}
+As the processor exectues a program it 
+\begin{enumerate}
+\item reads an instruction from memory and decodes it. 
+\item fetch or store the contents to a location in memory. (If necessary)
+\item The processor then executes the instruction and moves onto
+the next instruction in the program. 
+\end{enumerate}
+Cpu always accessing memory to:
+\begin{itemize}
+\item Fetch instructions,
+\item Fetch and store data
+\end{itemize}
+
+In a virtual memory system all fo these addresses are virtual addresses and not
+physical addresses. These addresses are converted into physical addresses by the
+processor based on information held in a set of tables maintained by the
+operating system.
+
+Virtual and physical memory are divided into handy size \emph{pages}. 
+\begin{itemize}
+\item These pages are all the same size. 
+\item Each of these pages is given an unique page frame number (PFN).
+\end{itemize}
+
+Then the virtual address of two parts:
+\begin{itemize}
+\item An offset
+\item A virtual page frame number
+\end{itemize}
+Each time the processor encounters a virtual address it must extract the offset
+and the virtual page fram number. The processor must translate the virtual page
+frame nubmer into a physical one and then access the location at the correct
+offset into the physical page by using \emph{page tables}
+
+Each entry in the theoretical page table contains the following information:
+\begin{itemize}
+\item Valid flag, indicating if this page table entry is valid.
+\item The physical page frame number that this entry is describing
+\item Access control information. describes how the page may be used. 
+\end{itemize}
+The page talbe is accessed using the virtual page frame number as an
+offset(index);
+
+To translate a virtual address into a physical one:
+\begin{enumerate}
+\item Work out the virtual addresses page frame number and the offset within the
+virtual page. (By making the page size a power of 2 this can be easily done by
+masking and shifting);
+\item The processor uses the virutal page frame number as an index into the
+processes page table to retrieve its page table entry. 
+  \begin{itemize}
+    \item If the page table entry at that offset is valid, the processor takes
+    the physical page frame number from this entry. 
+    \item If the entry is invalid, the process has accessed a nun-existent area
+    of its virtual memory. In this case, the processor must pass control to the
+    OS so that it can fix things up.
+  \end{itemize}
+\item Assuming that this is a valid page table entry, the processor takes the
+physical page frame number and multiplies by the page size to get the address of
+the page page in physical memory.
+\item The processor adds the offset to the instruction or data that it needs.
+\end{enumerate}
+\subsection{Demand paging}
+The technique of only loading the virtual
+pages into memory as they are accessed is known as demand paging. 
+
+When a process attempts to access a virtual address that is not currently in
+memory the processor cannot find a page table entry for the virtual page table
+for the virtual referenced. At this point the processor notifies the operating
+system that a page fault has occurred.
+
+If the faulting virtual address is invalid this means that the process has
+attempted to access a virtual address that it should not have. In this case
+the operating system will terminate it, protecting other processes in the
+system from this rogue process.
+
+If the faulting virtual address was valid but the page that it refers to is
+not currently in memory, the operating system must bring the appropriate page
+into memory from the image on disk.
+
+Disk access takes a long time, and so the process must wait quite a while until
+the page has been fetched. If there are other processes that could run then the
+OS will select one of them to run. 
+
+The fetched page is written into a free physical page frame and an entry for the
+virtual page frame number is added to the processes page table. The process is
+then restarted at the machine instruction where the memory fault occurred. 
+
+Linux uses demand paging to load executable images into a processes virtual
+memory. When ever a command is executed, the file containing it is opened and
+its contents are mapped into the processes virtual memory. 
+
+This is done by modifying the data structures describing this processes memory
+map and is known as \emph{memory mapping}.
+
+However, only the first part of the image is actually brought into physical
+memory. The rest of the image is left on the disk. As the image executes, it
+generates page faults and Linux uses the processes memory map in order to
+determine which parts of the image to bring into memory for execution. 
+
+\subsection{Swapping}
+If there are no free physical pages, the OS must make room for this page by
+discarding another page from physical memory.
+
+If the page to be discarded has not been written to then the page does not need
+to be saved. (It can be brought back into memory from image or data file).
+
+However, if the page has been modified, the OS must preserve the contents of
+that page so that it can be accessed at a later time. This type of page is
+known as \emph{dirty page}. 
+
+When it is removed from memory it is saved in a  special sort of file called
+\emph{swap file}. 
+
+The set of pages that a process is currently using is called the \emph{working
+set}. An efficient swap scheme would make sure that all processes have their
+working set in physical memory. 
+
+Linus uses a \emph{Least Recently Used}(LRU) page aging technique to fairly
+choose pages which might be removed from the system. This scheme involves every
+page in the system having an age which changes as the page is accessed. The more
+that a page is accessed, the younger it is; the less it is accessed the older
+and more stable it becomes. Old pages are good candidates for swapping.
+\subsection{Shared Virtual Memory}
+Virtual memory makes it easy for several processes that each process has its own
+separate page table. For two processes sharing a physical page of memory, its
+physical page frame number must appear in a page table entry in both of their
+page tables. 
+\subsection{Physical and Virtual Addressing Modes}
+It does not make much sense for the operating  system itself to run in virtual
+memory. Most multi-purpose processors support the notion of a physical address
+mode as well as a virtual address mode. 
+
+Physical addressing mode requires no page tables and the processor does not
+attempt to perform any address translations in this mode. The Linux kernel is
+linked to run in physical address space. 
+\subsection{Access Control}
+The page table entries also contain access control information. As the processor
+is already using the page table entry to map a processes virtual address to a
+physical one, it can easily use the access control information to check that the
+process is not accessing memory in a way that it should not. 
+
+Most processors have at least two modes of execution: \emph{kernel} and
+\emph{user}. You would not want kernel code executing by user or kernel data
+structures to be accessible except when the processor is running in kernel mode.
+
+The access control information is held in the PTE and is processor specific. 
+
+\section{Cache}
+Linux uses a number of memory management related caches:
+\begin{description}
+\item[Buffer Cache] The buffer cache contains data buffer that are used by the
+block device drivers. Indexed via the device identifier and the desired block
+number and is used to quickly find a block of data. 
+\item[Page Cache] Used to speed up access to images and data on disk. It is used
+to cache the logical contents of a file a page at a time and is accessed via the
+file and offset within the file. 
+
+\item[Swap Cache] Only dirty pages are saved in the swap file. So long as these
+pages are not modified after they have been written to the swap file then the
+next time the page is swapped out there is not need to write it to the swap file
+as the page is already in the swap file. Instead the page can simply be
+discarded. 
+\item[Hardware Caches] One commonly implemented hardware cache is in the
+processor; a cache of Page Table Entries. 
+\end{description}
+\section{Linux Page Tables}
+Linux assumes that there are \emph{three levels of page tables}. Each Page Table
+accessed contains the page frame number of the next level of Page Table. Each
+field providing an offset into a particular Page Table. To translate a virtual
+address into a physical one:
+\begin{enumerate}
+ \item The processor must take the contents of each level
+field, 
+ \item Convert it into an offset into the physical page containing the Page
+Table 
+  \item Read the page frame number of the next level of Page Table. 
+\end{enumerate}
+This is repeated three times until the page frame number number of the physical page
+containing the virtual address is found. Now the final field in the virtual
+address, the byte offset is used to find the data inside the page.
+
+Each platform that Linux runs on must provide translation macros that allow the
+kernel to traverse the page tables fro a particular process. This way the kernel
+does not need to know the format of the page table entries or how they are
+arranged. 
+
+\section{Page Allocation and Deallocation}
+There are many demands on the physical pages in the system. All of the physical
+pages in the system are described by the \verb|mem_map| data structure which is
+a list \verb|mem_mat_t| structures which is initialized at boot time. Each
+\verb|mem_map_t| describes a single physical page in the system. Important
+fields are: 
+\begin{description}
+\item[count] This is a count of the number of users of this page. The count is
+greater than one when it is shared.
+\item[age] Describes the age of the page and is used to decide if the page is a
+good candidate for discarding or swapping.
+\item[map\_nr] physical page frame number that the \verb|mem_map_t| describes.
+\end{description}
+The \verb|free_area| vector is used by the page allocation code to find and free
+pages. 
+\subsection{Page Allocation}
+Linux uses the Buddy algorithm to effectively allocate and deallocate blocks of
+pages. The page allocation code attempts to allocate a block of one or more
+physical pages. Pages are allocated in blocks which are power of 2 in size.
+
+That means it can allocate a block 1 page, 2 pages, 4 pages and so on. 
+
+So long as there are enough free pages in the system to grant this request, the
+allocation code will code will search the \verb|free_area| for a block of pages
+of the size requested. 
+
+Each element of the \verb|free_area| has a map of the allocated and free blocks
+of pages for that sized block. For example, element 2 of the array has a memory
+that describes free and allocated blocks each of 4 pages long.
+
+The allocation algorithm:
+\begin{enumerate}
+\item Searches for blocks of pages of the size requested. It follows the chains
+of free pages that is queued on the \verb|list| element of the \verb|free_area|
+data structure.
+\item If no blocks of pages of the requested size are free, blocks of the next
+size (twice that of the size requested) are looked for. This processor
+continues until all of the \verb|free_area| has been searched or until a block
+of pages has been found. 
+\item If the block of pages found is larger than the requested, it must be
+\emph{broken down} until there is a block of the right size. Because the
+blocks are each a power of 2 pages big then this breaking down process is easy
+as you simply break the blocks in half. The free blocks are queued on the
+appropriate queue and the allocated block of pages is returned to the caller.
+\subsection{Page Deallocation}
+The page deallocation code recombines pages into larger blocks of free pages. 
+
+Whenever a block of pages is freed, the adjacent or buddy block of the same size
+is checked to see if it is free. If it is, then it is combined with the newly
+freed block of pages to form a new free block of pages for next size block of
+pages. Each time two blocks of pages are recombined into a bigger block of free
+pages the page deallocation code attempts   to recombine that block into a yet
+larger one. 
+\section{Memory Mapping}
+When an image is executed, the contents of the executable must be brought into
+the processes virtual address space. The same is also true of any shared
+libraries that the executable image as been linked to use. 
+
+The executable is not actually brought into physical memory, instead it is
+merely linked into the processes virtual memory. Then, as parts of the program
+are referenced by the running application, the image is brought into memory from
+the executable image. The linking of an image into a processes virtual address
+space is know as memory mapping.
+\end{enumerate}
+\end{document}
+
