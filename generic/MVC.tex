@@ -1,0 +1,143 @@
+\documentclass[a4paper, 11pt]{book}
+\usepackage{parskip}
+\usepackage[top=1.8cm, bottom=2.5cm, left=1.5cm, right=1.5cm]{geometry}
+\title{MVP of the Dophin Smalltalk}
+\begin{document}
+\chapter{Model-View-Cotroller}
+In MVC, it is a view's responsibility to display the data held by a model
+object. A controller can be used to determine how low-level user gestures are
+translated into actions on the model.
+
+Generally, a view and a controller are directly linked togehter (usually by an
+instance variable pointing from one to the other) but a view/controller pair is
+only indirectly linked to the model, meaning that an Oberserver relationship is
+set up so taht the view/controller pair knows about the existence of the model
+but not vice versa.
+
+Advantage: It is possible to connect multiple views/controllers pair to the same
+model so taht several user interfaces can share the same data.
+
+In MVC, most of teh application functionality must be built into a model class
+know as an Application Model. It is then responsibility of the application model
+to be the mediator between the true domain ojbects and teh views and their
+controllers.
+
+The views are responsible for displaying the domain data while the controllers
+handle the raw user gestures that will eventually perform actions on this data. 
+
+So application model typically has methods to perform menu command actions, push
+buttons actions adn general validation on the data that it manages. Nearly all
+of the application logic will reside in the application model classes.
+
+For example, let's say one wants to explicitly change the color of one or more
+views dependent on some conditions in the application model. The correct way to
+do this in MVC would be to trigger some sort of event, passing teh color along
+with it. Behavior would then to be coded in the view to "hang off" this event
+and to apply the color change whenever the event was triggered. 
+
+\section{MVC In Smalltalk-80}
+View manages the graphical and/or textural output to the portion of display
+
+The controller interprets the moust and keyboard inputs from the user,
+commanding the model and/or the view to change as appropriate
+
+The model manage the behavior and the data of the application domain, responds
+to the requests for information about its state(usually from the view), and
+ responds to instruction to change state (usually from the controller).
+
+The formal separation of these three tasks is an important notion that is
+particularly suited to Smalltalk-80 where the basic behavior can be embodied in
+abstract objects: \emph{View}, \emph{Controller}, \emph{Model} and
+\emph{Object}.
+
+The MVC behavior is then inherited, added to, and modified as necessary to
+provide a flexible and powerful system.
+
+In smalltalk-80, input and output are largely stylized. Views must manage screen
+real estate and display text or graphics from within that real estate.
+
+Controllers must cooperate to ensure taht the proper controller is interpreting
+keyboard and mouse input (usually according to which view contains the cursor).
+Because the input and output behavior of most application is sytlized, much of
+it is inherited from the generic class View and Controller.
+
+In contract, the model cannot be sytlized. Constraints on the type of objects 
+allowed to function as models would limit the useful range of applictions 
+possible within MVC paradigm.
+
+\subsection{Communication Within The MVC Triad}
+Communication between a view and its associated controller is straightforward
+because View and Controller are specifically deisgned to work together. Models,
+on the other hand, communicate in a more subtle manner.  Models, on the other 
+hand, communicate in a more subtle manner.
+
+\subsubsection{The Passive Model}
+In the simplest case, it is not necessary for a model to make any provision
+whatever for participation in a MVC triad. 
+
+A simple WYSIWYG text editor is a good example:
+The central property of such an editor is that you should always see the text as
+it would appear on paper. So the view clearly must be informed of each change to
+the text so that it can update its display. 
+
+Yet the model (which we will assume is an instance of String) need not take 
+responsibility for communicating the
+changes to the view because these changes occur only by requests from the user.
+
+The controller can assume responsibility for notifying the view of any changes
+because it interprets the user's requests. It could simply notify the view that
+something has changed -- the view could then request the current state of the
+string from its model -- or the controller could specify to the view what has
+changed. 
+
+In either case, the string model is a completely passive holder of the
+string data manipulated by the view and the controller. It adds, removes, or
+replaces substrings upon demand from the controller and regurgitates appropriate
+substrings upon request from the view. The model is totally "unaware" of the
+existence of either the view or the controller and of its participation in an
+MVC triad. That isolation is not an artifact of the simplicity of the model, but
+of the fact that the model changes only at the behest of one of the other
+members of the triad.
+
+\subsection{The Model's Link to the Trial}
+But all models cannot be so passive. Suppose that the data object -- the string
+in the above example -- changes as a result of messages from objects other than
+its view or controller. For instance, substrings could be appended to the end of
+the string as is the case with the SystemTranscript. In that case the object
+which depends upon the model's state -- its view -- must be notified that the
+model has changed. Because only the model can track all changes to its state,
+the model must have some communication link to the view.
+
+ To fill this need, a
+global mechanism in Object is provided to keep track of dependencies such as
+those between a model and its view. This mechanism uses an IdentityDictionary
+called \textbf{DependentFields} (a class variable of Object) which simply records all
+existing dependencies. The keys in this dictionary are all the objects that have
+registered dependencies; the value associated with each key is a list of the
+objects which depend upon the key. In addition to this general mechanism, the
+class Model provides a more efficient mechanism for managing dependents. When
+you create new classes that are intended to function as active models in an MVC
+triad, you should make them subclasses of Model. Models in this hierarchy retain
+their dependents in an instance variable (dependents) which holds either nil, a
+single dependent object, or an instance of DependentsCollection. Views rely on
+these dependence mechanisms to notify them of changes in the model. When a new
+view is given its model, it registers itself as a dependent of that model. When
+the view is released, it removes itself as a dependent.
+
+The methods that provide the indirect dependents communication link are in the
+"updating" protocol of class Object. Open a browser and examine these methods.
+The message "changed" initiates an announcement to all dependents of an object
+that a change has occurred in that object. The receiver of the changed message
+sends the message update: self to each of it's dependents. Thus a model may
+notify any dependent views that it has changed by simply sending the message
+self changed. The view (and any other objects that are registered as dependents
+of the model) receives the message update: with the model object as the
+argument. [Note: There is also a changed:with: message that allows you to pass a
+parameter to the dependent.] The default method for the update: message, which
+is inherited from Object, is to do nothing. But most views have protocol to
+redisplay themselves upon receipt of an update: message. This changed/update
+mechanism was chosen as the communication channel through which views can be
+notified of changes within their model because it places the fewest constraints
+upon the structure of models.
+\end{document}
+

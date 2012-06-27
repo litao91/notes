@@ -1,0 +1,95 @@
+\documentclass[a4paper, 11pt]{book}
+\usepackage{parskip}
+\usepackage[top=1.8cm, bottom=2.5cm, left=1.5cm, right=1.5cm]{geometry}
+\title{Backbone JS Application}
+\begin{document}
+\chapter{Introduction}
+\section{Model View Controller}
+At the heart of MVC, and the idea is Separated Presentation, it's to make a
+clearn division between \emph{domain objects that model our perception of the
+real world} and \emph{presentation objects taht are the GUI elements we see on
+the screen}
+
+The Domain ojbects should be completely \textbf{self contained} and \textbf{work
+without reference to the presentation}.
+
+In MVC, the domain element is referred to as the \emph{model}. Model objects are
+completely ignorant of the UI. We'll take teh model as a reaing, with fields for
+all the interesting data upon it. 
+
+In MVC, we can assume a domain model of regular objects, rather than the recourd
+set. MVC assumes we are manipulating regular Smalltalk objects.
+
+The presentation part of MVC is made of \emph{view} and \emph{controller}
+
+The controller's job is to take the user's input and figure out what to do with
+it. The first part of reacting to the user's input is the \emph{various
+controllers collaborating to see who got edited}.
+
+Smalltalk figured out that you wanted generic UI components that could be
+reused. In this case the component would be \textbf{view-controller pair}.
+
+Both were generic class, so needed to be \textbf{plugged into the application
+specific behavior}. There would be an assessment view that would 
+\textbf{represent the whole screen and define the layout}.
+
+MVC has no event handlers on the accessment controller for the lower level
+components.
+
+A text field example: The configuration of the text field comes from giving it a
+link to its model, the reading, and telling it was method to invoke when the
+text changes. The text field contorller then makes a reflective invocation of
+that method on the reading to make change.
+
+So there is no overall object observing low level widgets, instead \textbf{low
+level widgets observe the model}, which itself handles many of the decision that
+would be made by the form. For example, when it comes to figuring out the
+variance, the reading object itself is the natural place to do that.
+
+Observers do occur in MVC. All the views and controllers observe the model. When
+the model changes, the views react. In this case the actual text view is
+notified that reading object has changed, and invokes the method to set the
+property. 
+
+You'll notice that the text field controller \emph{didn't set the value in the
+view itself}, it updated the model and then just let the observer mechanism take
+care of the updates. 
+
+MVC does synchronization by making updates on the model and then relying of the
+observer relationship to update the views that are oberving the model.
+
+One of the consequences of Oberserver Synchronization is that the controller is
+very ignorant of what other widgets need to chagne when the uer manipulates a
+particular widget.
+
+This useful ignorance becomes particularly handy if there are multiple screens
+open viewing the same model objects. 
+
+The classic MVC example was a spreadsheet liek screen of taht with a couple of
+differnt graphs of that data in separate windows. The spreadsheet window didn't
+need to be aware of what other windows were open, it just changed the model and
+Observer Synchronization took cake of the rest. 
+
+Problem of observer: you can't tell what is happening by reading the code.
+
+
+\section{MVP}
+Both MVC and MVP target the separation of concerns across multiple componetns,
+there are some fundamental differences betweens. We will focus on the version of
+MVP most suitable fro web-based architecture.
+\subsection{Models, View and Presenters}
+The P in MVP stands for presenter. It's a component which contains the
+\emph{user-interface business logic} for the view.
+
+Unlike MVC, invoctions from the view are delegated to the presenter, which are
+decoupled from the view and instead talk to it through an interface. 
+
+The most common implementation of MVP:
+\begin{itemize}
+\item Uses a Passive View, containing little to no logic.
+\item MVP models are almost identical to MVC model models and handle application
+data. 
+\item The presenter 
+\end{itemize}
+
+\end{document}
