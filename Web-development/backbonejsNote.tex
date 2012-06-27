@@ -89,7 +89,23 @@ The most common implementation of MVP:
 \item Uses a Passive View, containing little to no logic.
 \item MVP models are almost identical to MVC model models and handle application
 data. 
-\item The presenter 
+\item The presenter acts as a mediator which talks to both the view and model, 
+however both of these are isolated from each other.
 \end{itemize}
+They effectively bind models to views, a responsibility held by Controllers in
+MVC. Presenters are at the heart of the MVP patterns,
+ncorporate the presentation logic behind views.
 
+Sociated by a view, presenters perform any work to do with user requests and
+pass data  back to them. They retrieve data, manipulate it and determine how the
+data should be displayed in the view.
+
+In some implementations, the presenter also interacts with a service layer to
+persist data(models).
+
+Models may trigger events but it's the presenter's role to subscribe to them so
+that it can update the view. 
+
+In this passive architecture, we have no concept of direct data binding. Views
+expose setters which presenters can use to set data.
 \end{document}
