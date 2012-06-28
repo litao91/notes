@@ -1,0 +1,76 @@
+\documentclass[11pt]{book}
+\usepackage{parskip}
+\usepackage{spverbatim}
+\usepackage[top=1.8cm, bottom=2.5cm, left=1.5cm, right=1.5cm]{geometry}
+\usepackage{fontspec}
+\setmainfont{DejaVu Serif}
+\begin{document}
+\chapter{Personalizing Vim}
+\begin{description}
+\item[Changing the font] \verb|set guifont=Courier\ 14| Courier can be exchanged
+with the name of any font 14 with any font size.
+\item[Changing Color Scheme] \verb|colorscheme mycolor|
+\item[personal Highlighting] \verb|match Group /pattern/| Two arguments, the
+first one is the name of the color group, the second is the actual pattern you
+want to match. use \verb|match NONE| to cancel match, also we have \verb|2match|
+\verb|3match| to have second and third match.
+\item[Defining color group]
+ \verb|hightlight MyGroup ctermbg=red guibg=red gctermfg=yellow guifg=yellow term=bold|
+\item[Set how the status line should look] \verb|set statusline format|, format
+is a string such as printf that describes how the status line should look. Use
+\verb|help stausline| to find the detail. Example
+\begin{spverbatim}
+set statusline=%F%m%r%h%w\ [FORMAT=%{&ff}]\ [TYPE=%Y]\ [ASCII=\%03.3b]\ [HEX=\%02.2B]\ [POS=%04l,%04v]\ [%p%%]\ [LEN=%L]
+\end{spverbatim}
+ \item[Make sure status line always shown] \verb|set laststatus=2|
+\item[Remove menus in Gvim] \verb|set guioptions-=m|, \verb|set guioptions-=T|, 
+see \verb|help 'guioptions'|
+\item[Modifying tabs]\verb|set tabline=tabline-layout| and \verb|set guitablabel|
+ for gui. It's very similar to one used for the status line.
+\item[Remove tab] \verb|set showtabline=0|
+\item[Set tab tip] \verb|guitabtooltip|, the value you want to show when the
+mouse cursor hovers the tab.
+\item[Cursor tracking] \verb|set cursorline|, we can add style
+ \verb|highlight CursorLine guibg=lightblue ctermbg=lightgray|, For column:
+\verb|set cursorcolumn|
+\item[Adding Line number] \verb|set number|, change the default number of
+columns used for the line numbers:\verb|set numberwidth=XXX|, XXX is number
+\item[Spell Checking]\verb|set spell| and \verb|set spelllang=en,de,da| to set
+language. Pressing Z + = to have a list of good guesses.
+ \verb|set spellsuggest=X| to set number of alternative ways of spelling
+\item[ballons] In Vim, tool tips for the editing area are called
+\textbf{ballons} and they are only shown when the cursor is hovering over one of
+the characters. The commands you will need to know in order to use the ballon
+are
+    \begin{itemize}
+        \item Turn on \verb|set ballooneval|
+        \item Howlong it should wait before showing \verb|set balloondelay=400|
+        \item Sets the string that vim will show in the ballon:
+            \verb|set balloonexpr="textstring"| can be a static string or return
+            from some function
+    \end{itemize}
+\item[Abbreviations] In vim, abbreviations are created withn:
+    \begin{itemize}
+        \item \verb|:abbreviate|: abbreviations for all modes
+        \item \verb|:labbrev|: abbreviations for insert mode
+        \item \verb|:cabbrev|: abbreviations for the command mode only.
+    \end{itemize}
+    All of the commands take two arguments - the abbreviation and the full text
+    should expand to.
+    Simply place a file called abbrevation.vim and put in your VIMHOME, and
+    simple call \verb|source: $VIM/abbreviation.vim| in your vimrc
+\item[Modifying key bindings]
+    \begin{itemize}
+    \item \verb|:map| for all mode
+    \item \verb|:imap| for insert mode only
+    \item \verb|:cmap| for command-line mode only
+    \item \verb|:nmap| for the Normal mode only
+    \item \verb|:vmap| for visual mode only
+    \end{itemize}
+    e.g Ctrl+S to save:\verb|:map <C-s> :w<cr>| the \verb|<cr>| to execute the
+    command. Check \verb|help key-mapping|
+\end{description}
+ \chapter{Better Navigation}
+
+
+\end{document}
