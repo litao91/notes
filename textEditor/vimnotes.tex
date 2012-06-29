@@ -71,6 +71,36 @@ are
     command. Check \verb|help key-mapping|
 \end{description}
  \chapter{Better Navigation}
+ \section{Context aware navigation}
+ \begin{itemize}
+ \item \verb|{| Go to gthe beginning of the paragraph, or in the empthy line
+  just above it, \verb|}| end of the paragraph
+ \item \verb|g,| go the place where you make change previously, using this
+ comman dseveral times in a row will loop you through locations of previous
+ changes in the file.\verb|g;| will let you move forward.
+ \item \verb|(:| Move to the beginning of the sentence and \verb|):| end of the
+ sentence.
+ \item \verb|w| Move to the beginning of the next word.
+ \item \verb|b| Move to the beginning of the previous word.
+ \item \verb|e| Move to the end of the world.
+ \item \verb|%| Go to the other side of the block.
+ \item \verb|[[| and \verb|][| Move backwards/ forward to the next section
+ beginning(for example, start of a function);
+ \item \verb|[]| and \verb|]]| Move backwards/forward to the next section end.
+ \item \verb|[{|Move to the beginning of the block, \verb|]}| move to the end of
+ the blcok
+ \item \verb|[/| Move to the beginning of the comment block, and \verb|]\| for
+ the end.
+ \item \verb|gd| go to declaraction , start search from current line. The 
+ \verb|gD| start from line one. 
+ \end{itemize}
+ \section{Faster Navigation in Vim help}
+ \begin{itemize}
+ \item \verb|Ctrl+]| to follow the link
+ \end{itemize}
+
+
+
 
 
 \end{document}
