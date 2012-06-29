@@ -1,6 +1,8 @@
 \documentclass[11pt, a4paper]{book}
 \usepackage{parskip}
 \usepackage[top=1.5cm, left=1cm, right=1cm, bottom=2.5cm]{geometry}
+\usepackage{fontspec}
+\setmainfont{DejaVu Serif}
 \begin{document}
 \chapter{Classes and Methods}
 \section{Scroller}
@@ -116,5 +118,56 @@ the target view will receieve the same event but with the \verb|ACTION_CANCEL|
 and all further events will be delivered to your \verb|onTouchEvent()| method
 and no longer appear here.
 \end{enumerate}
+\chapter{View Animation}
+You can use the view animation system to perform tweened animation on Views.
+Tween animation calculated the animation with information such as the start
+point, end point, size, rotation, and other common aspect of an animation.
+
+A tween animation ca perform a series of simple transformations on the contents
+of a View object. A sequence of animation instructions defines the tween
+animation, defined by either XML or Android code.  
+
+The animation instructions define the transformation that you want to occur,
+when they will occur, and how long they should take to apply. Transformations ca
+be sequential or simultaneous.
+
+Each transformation takes a set of parameters specific for that transformation,
+and also a set of common parameters.
+
+To make several transformation happen simultaneously, give them the same stat
+time; to make them sequential, calculate the start time plus the duration of the
+preceding transformation.
+
+The animation XML file belongs in the \verb|res/anim/| directory of your Android
+project. The file must have a single root element:this will be either a single
+\verb|<alpha>|, \verb|<scale>|, \verb|<translate>|, \verb|<rotate>|,
+interpolator element, or \verb|<set>|element that hold groups of these
+elements.To make them occur sequentially, you must specify the
+\verb|startOffset| attribute.
+
+You can determine \emph{how a transformation is applied over time} by assigning
+an \verb|Interpolator|.
+
+With XML saved as \verb|hyperspace_jump.xml| in the \verb|res/anim/| directory
+of the project, the following code will reference it and apply it to an
+\verb|ImageView| object from the layout
+\begin{verbatim}
+ImageView spaceshipImage = (ImageView) findViewById(R.id.spaceshipImage);
+Animation hyperspaceJumpAnimation = AnimationUtils.loadAnimation(this, R.anim.hyperspace_jump);
+spaceshipImage.startAnimation(hyperspaceJumpAnimation);
+\end{verbatim}
+\chapter{About XML and Layout}
+\section{Optimize by merging}
+The \verb|<merge/>| was created for the purpose of optimizing Android layouts by
+reducing the number of levels in view trees. 
+
+Example: The following XML layout declares a layout that shows an image with its
+title on top of it:
+\begin{verbatim}
+
+\end{verbatim}
+
+
+
 
 \end{document}
