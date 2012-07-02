@@ -70,8 +70,9 @@ are
     e.g Ctrl+S to save:\verb|:map <C-s> :w<cr>| the \verb|<cr>| to execute the
     command. Check \verb|help key-mapping|
 \end{description}
+
  \chapter{Better Navigation}
- \section{Context aware navigation}
+ Context aware navigation:
  \begin{itemize}
  \item \verb|{| Go to gthe beginning of the paragraph, or in the empthy line
   just above it, \verb|}| end of the paragraph
@@ -93,14 +94,47 @@ are
  the end.
  \item \verb|gd| go to declaraction , start search from current line. The 
  \verb|gD| start from line one. 
- \end{itemize}
- \section{Faster Navigation in Vim help}
- \begin{itemize}
  \item \verb|Ctrl+]| to follow the link
  \end{itemize}
 
+ Fater navigation in multiple buffers:
+ For every file you open, you have a Vim buffer.
+ \begin{itemize}
+ \item \verb|:buffers| Bring up the list of buffers and find the right buffer in
+ the list. Note that this is not interactive.
+ \item With the number N of the buffer where the file is place, you can switch
+ to that with: \verb|:buffer N|.
+ \item Go cycle through: \verb|bnext| \verb|bprevious|
+ \item Open referenced files faster: \verb|gf|
+ \end{itemize}
+ \chapter{Search and you will find}
+ Search In current file:
+ \begin{itemize}
+ \item \verb|?someWord| the command searches backwards in the file for the first
+ word after the question mark.
+ \item \verb|/someWord| Search forward.
+ \item \verb|g#| and \verb|g*| Now vim not just jumps to the next occurrence of
+ the word, but also to anyoccurrences where the world is part of another word.
+ \end{itemize}
+ Search in multiple files:
+ \begin{itemize}
+ \item \verb|:vimgrep /pattern/[j][g] file fiel2 ... fileN|, this command takes
+ two arguments. The first is the pattern you want to search for. You can use
+ Vim's regular expressions in the pattern or you can just write a word. You can
+ add either the two flags j and g. The flags help you select how much to get
+ your result, and how it should presented to you. If the g flag is added, then
+ the result will include a line for each match of the pattern. If the j flag is
+ added to the end of your pattern, then you will not be presented with the
+ result. I will just be updated into your quickfix list for later retrieval. The
+ second argument to vimgrep is the list of files.
+ \item \verb|:helpgrep pattern [@LANG]| search in the help.
+ \item \verb|:helptags /path/to/documentation| for new Vim plugin.
+ \end{itemize}
+ X marks the spot(Adding visible and hidden markers).
+ \begin{itemize}
+ \item \verb|:sign define name arguments|
 
 
-
-
+ 
+ 
 \end{document}

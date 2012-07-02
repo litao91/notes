@@ -1,6 +1,8 @@
 \documentclass[a4paper, 11pt]{book}
 \usepackage{parskip}
 \usepackage[top=1.8cm, bottom=2.5cm, left=1.5cm, right=1.5cm]{geometry}
+\usepackage{fontspec}
+\setmainfont{DejaVu Serif}
 \title{MVP of the Dophin Smalltalk}
 \begin{document}
 \chapter{Model-View-Cotroller}
@@ -11,34 +13,34 @@ translated into actions on the model.
 Generally, a view and a controller are directly linked togehter (usually by an
 instance variable pointing from one to the other) but a view/controller pair is
 only indirectly linked to the model, meaning that an Oberserver relationship is
-set up so taht the view/controller pair knows about the existence of the model
+set up so that the view/controller pair knows about the existence of the model
 but not vice versa.
 
 Advantage: It is possible to connect multiple views/controllers pair to the same
-model so taht several user interfaces can share the same data.
+model so that several user interfaces can share the same data.
 
-In MVC, most of teh application functionality must be built into a model class
+In MVC, most of the application functionality must be built into a model class
 know as an Application Model. It is then responsibility of the application model
-to be the mediator between the true domain ojbects and teh views and their
+to be the mediator between the true domain ojbects and the views and their
 controllers.
 
 The views are responsible for displaying the domain data while the controllers
 handle the raw user gestures that will eventually perform actions on this data. 
 
 So application model typically has methods to perform menu command actions, push
-buttons actions adn general validation on the data that it manages. Nearly all
+buttons actions and general validation on the data that it manages. Nearly all
 of the application logic will reside in the application model classes.
 
 For example, let's say one wants to explicitly change the color of one or more
 views dependent on some conditions in the application model. The correct way to
-do this in MVC would be to trigger some sort of event, passing teh color along
+do this in MVC would be to trigger some sort of event, passing the color along
 with it. Behavior would then to be coded in the view to "hang off" this event
 and to apply the color change whenever the event was triggered. 
 
 \section{MVC In Smalltalk-80}
 View manages the graphical and/or textural output to the portion of display
 
-The controller interprets the moust and keyboard inputs from the user,
+The controller interprets the mouse and keyboard inputs from the user,
 commanding the model and/or the view to change as appropriate
 
 The model manage the behavior and the data of the application domain, responds
@@ -56,7 +58,7 @@ provide a flexible and powerful system.
 In smalltalk-80, input and output are largely stylized. Views must manage screen
 real estate and display text or graphics from within that real estate.
 
-Controllers must cooperate to ensure taht the proper controller is interpreting
+Controllers must cooperate to ensure that the proper controller is interpreting
 keyboard and mouse input (usually according to which view contains the cursor).
 Because the input and output behavior of most application is sytlized, much of
 it is inherited from the generic class View and Controller.

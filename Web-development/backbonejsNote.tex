@@ -2,6 +2,7 @@
 \usepackage{parskip}
 \usepackage[top=1.8cm, bottom=2.5cm, left=1.5cm, right=1.5cm]{geometry}
 \title{Backbone JS Application}
+
 \begin{document}
 \chapter{Introduction}
 \section{Model View Controller}
@@ -108,4 +109,307 @@ that it can update the view.
 
 In this passive architecture, we have no concept of direct data binding. Views
 expose setters which presenters can use to set data.
+
+\section{MVP, MVC and backbone.js}
+\begin{itemize}
+\item The presenter in MVP better describes the Backbone.View (The layer between
+View templates and the data bound to it) than a controller does.
+\item The model fits Backbone.Model
+\item The views best represent templates (e.g Handle/Mustache markup templates) 
+\end{itemize}
+The V in MVC and the P in MVP can both be accomplished by Backbone.View because
+they are able to achieve two purpose:
+\begin{itemize}
+\item rendering atomic components
+\item Assembling those components rendered by other views.
+\end{itemize}
+
+\section{Summary}
+Facts about Backbone.js:
+\begin{itemize}
+\item Core components: Model, View, Collection, Router. Enforces it's own flavor
+of MV*
+\item Event-driven communication between views and models. It's relatively
+straight-forward to add event listeners to any attribute in a model, giving
+developers finegrained control over what changes in the view.
+\end{itemize}
+\chapter{The Basics}
+\section{Models}
+Backbone models contain \textbf{interactive data} for an application as well as
+the \textbf{logic} around this data. 
+
+For example, we can use a model to represent the concept of a photo object
+including its attributes like tags, titles and a location:
+
+\begin{verbatim}
+var Photo= Backbone.Model.extend({
+  defaults: {
+    src:'placeholder.jpg',
+    title:'an image placeholder',
+    coordinates:[0,0]
+  },
+  initialize: function() {
+    this.on("change:src", function(){
+      var src = this.get("src");
+      console.log('Image source updated to ' + src);
+    });
+  },
+  changeSrc: function(source) {
+    this.set({src:source});
+  }
+});
+var somePhoto = new Photo({src:'test.jpg", title:"testing"});
+somePhoto.changeSrc("magic.jpg"); //which will triggers "change:src" and logs an
+update message to the console
+\end{verbatim}
+\subsection{Initialization}
+The initialize() method is called when a new instance of a model is created
+when a new instance of a model is created. 
+\subsection{Getters and Setters}
+\subsubsection{Model.get()}
+\verb|Model.get()| provides easy access to a model's attributes.
+
+Attributes which are passed through to the model on instantiation are instantly
+avaliable for retrieval:
+\begin{verbatim}
+var myPhoto = new Photo({ title: "My awesome photo", 
+                      src:"boston.jpg", 
+                      location: "Boston", 
+                      tags:['the big game', 'vacation']}),
+
+title = myPhoto.get("title"), //My awesome photo
+location = myPhoto.get("location"), //Boston
+tags = myPhoto.get("tags"), // ['the big game','vacation']
+photoSrc = myPhoto.get("src"); //boston.jpg
+\end{verbatim}
+Alternatively, if you wish to directly access all of the attributes in a model's
+instance, you can:
+\begin{verbatim}
+var myAttributes = myPhoto.attributes;
+\end{verbatim}
+
+It is best pratice to use \verb|Model.set()| or direct instantiation to set the
+values of a model's attributes.
+
+Accessing \verb|Model.atributes| directly is generally discourage. Instead,
+should you need to read or clone data, \verb|Model.toJSON()| is recommended for
+this purpose.
+
+\subsection{Model.set()}
+\verb|Model.set()| allows us to pass attributes into an instance of our model.
+Attributes can be set during initialization or at any time after wards. 
+
+Backbone uses \verb|Model.set()| to know when to broadcast that a model's data
+has changed.
+\subsection{Default Values}
+There are times when you want your model to have a set of default values, this
+can be set using a property called \verb|defaults| in your model.
+\subsection{Listening for changes to your model}
+Any and all of the attributes in a Backbone model can have listeners bound to
+them which detect when their values change. Listeners can be added to teh
+\verb|initializa()| function:
+\begin{verbatim}
+this.on('change', function() {
+  concole.log('values for this model have changed');
+}
+\end{verbatim}
+For a specific attribute:
+\begin{verbatim}
+initialize: function(){
+    console.log('this model has been initialized');
+    this.on("change:title", function(){
+        var title = this.get("title");
+        console.log("My title has been changed to.. " + title);
+    });
+},
+\end{verbatim}
+\subsection{Validation}
+Through \verb|Model.validate()|, checking the attribute values for a model prior to them being set.
+\begin{verbatim}
+var Photo = Backbone.Model.extend({
+    validate: function(attribs){
+        if(attribs.src === undefined){
+            return "Remember to set a source for your image!";
+        }
+    },
+
+    initialize: function(){
+        console.log('this model has been initialized');
+        this.on("error", function(model, error){
+            console.log(error);
+        });
+    }
+});
+
+var myPhoto = new Photo();
+myPhoto.set({ title: "On the beach" });
+//logs Remember to set a source for your image!
+\end{verbatim}
+\section{Creating new Views}
+To create a new View, simply extend \verb|Backbone.View|. 
+\begin{verbatim}
+var PhotoSearch = Backbone.View.extend({
+  el: $("#results'),
+  render: function(event) {
+    var compiled_template =
+         _.template($("#results-template").html());
+         this.$el.html(
+            compiled_template(this.model.toJSON()));
+         return this; //recommended as this enables calls to be chained
+  }, 
+  events: {
+    "submit #searchForm": "search",
+    "click .reset": "reset",
+    "click. advanced": "switchContext"
+  },
+  search: function(event) {
+    //executed when a form '#searchForm' has been submitted.
+  },
+  reset: function(event) {
+    //executed when an element with class "reset" has been clicked
+  },
+  swithConext: function(event) {
+    //executed when an element with class "advanced" has been clicked.
+  }
+});
+\end{verbatim}
+\subsection{What is el}
+\verb|el| is basically a reference to a DOM element and all views must
+ have one. It allows for all of the contents of a view to be inserted 
+ into the DOM at once, which makes for faster rendering as browser 
+ performs the minimum required reflows and repaints.
+
+ There are two ways to attach a DOM element to a view:
+ \begin{itemize}
+ \item The element already exists in the page
+ \item A new element is created for the view and added maually by the developer.
+ \end{itemize}
+If the element already exists in the page, you can set \verb|el| as either a CSS
+selector that matches the element or a simple reference to the DOM element or a
+simple referene to the DOM element.
+\begin{verbatim}
+el: '#footer',
+//OR
+el:document.getElementById('footer')
+\end{verbatim}
+If you want to create a view, set any combination of the following view's
+properties:\verb|tagName|, \verb|id| and \verb|className|. A new element will be
+created for you by the framework and a reference to it will be available at the
+\verb|el| property.
+\begin{verbatim}
+tagName: 'p',//required, but defaults to 'div' if not set
+className: 'container', //optional, you can assign multiple classes to this
+property like so 'container homepage'
+id: 'header', //optional
+\end{verbatim}
+The above code creates the \verb|DOMElement| below but doesn't append it to the
+DOM. 
+\begin{verbatim}
+<p id="header" class="container"></p>
+\end{verbatim}
+\subsection{Understanding render()}
+\verb|render()| is an optional function that defines the logic for rendering a
+template. 
+
+The \verb|_.tmplate| method in Underscore compiles JavaScript templates into
+functions which can be evaluated for rendering.
+
+Next, set the html of the \verb|el| DOM element to the output of processing a
+JSON version of the model associated with the view through the compiled
+template.
+\subsectioin{The events attribute}
+The Backbone \verb|events| attribute allows us to \emph{attach event listeners}
+to either custom selectors, or directly to el if no selector is provided. 
+
+An event takes the form:
+\begin{verbatim}
+{"eventName selector":"callbackFunction"}
+\end{verbatim}
+and a number of event types are supported, including \verb|click|,
+\verb|submit|, \verb|mouseover|, \verb|dblclick| and more.
+Backbone uses jQuery's \verb|.delegate()| to provide instant support for event
+delegation but goes a little further, extending it so that \verb|this| always
+refers to the current view object. 
+
+Any string callback supplied to the events attribute must have a corresponding
+function with the same name within the scope of your view.
+\section{Collections}
+Collections are sets of Models and are created by
+extending:\verb|Backbone.Collection|.
+
+Normally, when creating a collection you'll also want to pass through a property
+specifying the model that your collection will contain, as well as any instance
+properties required. Example:
+\begin{verbatim}
+var PhotoCollection = Backbone.Collection.extend({
+  model:Photo
+});
+\end{verbatim}
+
+\subsection{Getters and Setters}
+Use \verb|Collection.get()| which accepts a single id as follows:
+\begin{verbatim}
+var skiiingEpicness = PhotoCollection.get(2)|
+\end{verbatim}
+
+Sometimes you may also want to get a model based on its \emph{client id}. The
+client id is a property that \textbf{Backbone automatically assignes models that
+have not yet been saved}. You can get a model's client id from its \verb|.cid|
+property.
+\begin{verbatim}
+var mySkiingCrash = PhotoCollection.getByCid(456);
+\end{verbatim}
+Backbone Collections don't have setters as such, but do support adding new
+models via \verb|.add()| and removing models via \verb|.remove()|
+
+\begin{verbatim}
+var a = new Backbone.Model({title:'my vacation'}),
+    b = new Backbone.Model({Title:'my holiday'});
+
+var photoCollection = new PhotoCollection([a,b]);
+photoCollection.remove([a,b]);
+\end{verbatim}
+\subsection{Listening for events}
+We're able to listen for \verb|add| and \verb|remove| events for when new models
+are added 
+\begin{verbatim}
+var PhotoCollection = new Backbone.Collection();
+photoCollection.on("add", function(photo) {
+  console.log("I liked " + photo.get("title") + 'its this one, right? '
+   + photo.get("src"));
+});
+PhotoCollection.add([
+  {title: "My trip to Bali", src: "bali-trip.jpg"},
+  {title: "The flight home", src: "long-flight-oofta.jpg"},
+  {tilte: "Uploading pix", src: "too-many-pics.jpg"}
+  ]);
+\end{verbatim}
+In addition, we're able to bind a \verb|change| event:
+\begin{verbatim}
+PhotoCollection.on("change:title", fcuntion() {
+  console.log('there have been updates made to this coolections titles');
+});
+\end{verbatim}
+\section{Fetching models from the server}
+\verb|Collection.fetch()| retrieves a default set of models from the server in
+the form of a JSON array. When this data returns, the current collection's
+contents will be replaced with the collection of the array.
+\begin{verbatim}
+var PhotoCollection = new Backbone.Collection;
+PhotoCollection.url='/photos';
+PhotoCollection.fetch();
+\end{verbatim}
+Under the covers, \verb|Backbone.sync| is the function called every time
+Backbone tries to read or save models to the server.
+
+It uses jQuery or Zepto's ajax implementations to make the RESTful request.
+
+In the above example, if we wanted to log an event when \verb|synce()| was
+called:
+\begin{veratim}
+Backbone.sync = function(method, model) {
+  console("I've been passed " + method + "with" + JSON.stringify(model));
+};
+\end{verbatim}
+
 \end{document}
