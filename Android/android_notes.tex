@@ -30,7 +30,7 @@ application, so the system can optimize and only send updates to actively
 listening hosts. 
 
 \subsection{AppWidgetHostView}
-Provides teh glue to show AppWidgetViews. Offers automatic animation between
+Provides the glue to show AppWidgetViews. Offers automatic animation between
 updates, and will try recycling old views for each incoming.
 \subsection{AppWidgetProviderInfo}
 Describes the meta data for an installed AppWidgetProvider. The fields
@@ -56,11 +56,11 @@ part of an Android application, which ofen privides its own UI for working with
 the data. 
 
 However, content providers are primarily intended to be \emph{used by other
-applications}, which access teh provider using a provider client object. 
+applications}, which access the provider using a provider client object. 
 
 \subsection{Content URIs}
 A content URI is a URI that indentifies data in a provider. Content URIs include
-the symbolic name of teh entire provider (its authority) and name that points to
+the symbolic name of the entire provider (its authority) and name that points to
 a table (a path).
 \section{Handler}
 A Handler allows you to send and process Message and Runnable objects associated
@@ -97,7 +97,7 @@ processed as soon as the message queue is ready to do so, or specify a dely.
 \subsection{onInterceptTouchEvent}
 Implement this method to intercept all touch screen \verb|MotionEvent|. This
 allow you to \emph{watch event as they are dispatched to your children}, and
-take the owner ship of teh current gesture at any point.
+take the owner ship of the current gesture at any point.
 
 Events will be received in the following order:
 \begin{enumerate}
@@ -118,12 +118,13 @@ the target view will receieve the same event but with the \verb|ACTION_CANCEL|
 and all further events will be delivered to your \verb|onTouchEvent()| method
 and no longer appear here.
 \end{enumerate}
+
 \chapter{View Animation}
 You can use the view animation system to perform tweened animation on Views.
 Tween animation calculated the animation with information such as the start
 point, end point, size, rotation, and other common aspect of an animation.
 
-A tween animation ca perform a series of simple transformations on the contents
+A tween animation can perform a series of simple transformations on the contents
 of a View object. A sequence of animation instructions defines the tween
 animation, defined by either XML or Android code.  
 
@@ -138,6 +139,7 @@ To make several transformation happen simultaneously, give them the same stat
 time; to make them sequential, calculate the start time plus the duration of the
 preceding transformation.
 
+\section{Defining in XML}
 The animation XML file belongs in the \verb|res/anim/| directory of your Android
 project. The file must have a single root element:this will be either a single
 \verb|<alpha>|, \verb|<scale>|, \verb|<translate>|, \verb|<rotate>|,
@@ -156,7 +158,134 @@ ImageView spaceshipImage = (ImageView) findViewById(R.id.spaceshipImage);
 Animation hyperspaceJumpAnimation = AnimationUtils.loadAnimation(this, R.anim.hyperspace_jump);
 spaceshipImage.startAnimation(hyperspaceJumpAnimation);
 \end{verbatim}
+
+XML examples:
+\begin{verbatim}
+<?xml version="1.0" encoding="utf-8"?>
+
+<alpha xmlns:android="http://schemas.android.com/apk/res/android"
+       android:interpolator="@android:anim/accelerate_interpolator"
+       android:fromAlpha="0.0" android:toAlpha="1.0" android:duration="100" />
+\end{verbatim}
+\begin{verbatim}
+<?xml version="1.0" encoding="utf-8"?>
+
+<layoutAnimation xmlns:android="http://schemas.android.com/apk/res/android"
+        android:delay="10%"
+        android:order="reverse"
+        android:animation="@anim/slide_right" />
+\end{verbatim}
+\section{Defining in Java code}
+Example of sliding a view down from the top:
+\begin{verbatim}
+ AnimationSet set = new AnimationSet(true);
+
+  Animation animation = new AlphaAnimation(0.0f, 1.0f);
+  animation.setDuration(100);
+  set.addAnimation(animation);
+
+  animation = new TranslateAnimation(
+      Animation.RELATIVE_TO_SELF, 0.0f, Animation.RELATIVE_TO_SELF, 0.0f,
+      Animation.RELATIVE_TO_SELF, -1.0f, Animation.RELATIVE_TO_SELF, 0.0f
+  );
+  animation.setDuration(500);
+  set.addAnimation(animation);
+
+  LayoutAnimationController controller =
+      new LayoutAnimationController(set, 0.25f);
+\end{verbatim}
+Notes on this code:
+\begin{itemize}
+\item The animation ssequence is defined in Java, as an AnimationSet object, to
+which various Animation subclasses can be added.
+\item You have to create \verb|LayoutAnimationController| which will actually
+orchestrate the sequence/AnimationSet that you've defined .
+\end{itemize}
+\section{Applying animation sequences}
+Once animation sequences are defined in XML or java, they can be applied to
+Views or ViewGroups and run.
+\subsection{Layout animation}
+When applying a layout animation to a ViewGroup, you \emph{don't have to start
+or stop the animation sequence}. You can't pause it. When you add or remove a
+View from your ViewGroup, the animation sequence you have specified will run at
+that moment.
+\subsubsection{Loading layout animation from Java}
+\begin{verbatim}
+public static void setLayoutAnim_slidedownfromtop(ViewGroup panel, Context ctx) {
+
+  AnimationSet set = new AnimationSet(true);
+
+  Animation animation = new AlphaAnimation(0.0f, 1.0f);
+  animation.setDuration(100);
+  set.addAnimation(animation);
+
+  animation = new TranslateAnimation(
+      Animation.RELATIVE_TO_SELF, 0.0f, Animation.RELATIVE_TO_SELF, 0.0f,
+      Animation.RELATIVE_TO_SELF, -1.0f, Animation.RELATIVE_TO_SELF, 0.0f
+  );
+  animation.setDuration(500);
+  set.addAnimation(animation);
+
+  LayoutAnimationController controller =
+      new LayoutAnimationController(set, 0.25f);
+  panel.setLayoutAnimation(controller);
+}
+\end{verbatim}
+The LayoutAnimationController is used by the ViewGroup, who's layout is being
+animated, to determine how your AnimationSet will be orchestrated and drawn.
+
+Finally, once the layout controller has been created, after the animation set is
+defined, you have to bind it to a ViewGroup that will automatically invoke this
+animation controller, which will run the set, when the layout is changed.
+
+\subsubsection{Loading layout animation from XML}
+\begin{verbatim}
+public static void setLayoutAnimation2(ViewGroup panel, Context ctx) {
+
+  LayoutAnimationController controller = AnimationUtils.loadLayoutAnimation(ctx, R.anim.app_enter);
+
+  panel.setLayoutAnimation(controller);
+
+}
+\end{verbatim}
+\subsection{View animation}
+
+
 \chapter{About XML and Layout}
+\section{Include to Reduce}
+A component can be seen as a complex widget made of several simple stock
+widgets. Creating new components can be done easily by writing a custom
+\verb|View| but it can be done even more easily using only XML.
+
+In Android XML layout file, each tag is mapped to an actual class instance. The
+UI toolkit lets you also use three special tags that are not mapped to a 
+\verb|View| instance:\verb|<requestFocus />|, \verb|<merge />| and
+\verb|<incude\>|. The latter \verb|<include/>| can be used to create pure XML
+visual components.
+
+The \verb|<include />| includes another XML layout. Using this tag is straight
+forwad as shown in the follwing example:
+\begin{verbatim}
+<com.android.launcher.Workspace
+    android:id="@+id/workspace"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+
+    launcher:defaultScreen="1">
+
+    <include android:id="@+id/cell1" layout="@layout/workspace_screen" />
+    <include android:id="@+id/cell2" layout="@layout/workspace_screen" />
+    <include android:id="@+id/cell3" layout="@layout/workspace_screen" />
+
+</com.android.launcher.Workspace>
+\end{verbatim}
+
+In the \verb|<include />| only the layout attribute is required. This attribute
+\emph{without the android namespace prefix, is a reference to the layout file
+you wish to include}. You can override all the layout parameters.
+
+
+
 \section{Optimize by merging}
 The \verb|<merge/>| was created for the purpose of optimizing Android layouts by
 reducing the number of levels in view trees. 
@@ -164,10 +293,75 @@ reducing the number of levels in view trees.
 Example: The following XML layout declares a layout that shows an image with its
 title on top of it:
 \begin{verbatim}
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
 
+    <ImageView  
+        android:layout_width="fill_parent" 
+        android:layout_height="fill_parent" 
+    
+        android:scaleType="center"
+        android:src="@drawable/golden_gate" />
+    
+    <TextView
+        android:layout_width="wrap_content" 
+        android:layout_height="wrap_content" 
+        android:layout_marginBottom="20dip"
+        android:layout_gravity="center_horizontal|bottom"
+
+        android:padding="12dip"
+        
+        android:background="#AA000000"
+        android:textColor="#ffffffff"
+        
+        android:text="Golden Gate" />
+
+</FrameLayout>
+\end{verbatim}
+Since our FrameLayout has the same dimension as its parent, by the virtue of
+using the \verb|fill_parent| constraints, and does not define any background,
+extra padding or a gravity, it is \emph{totally useless}. We only made the UI
+more complex. Since XML documents require a root tags in XML layout always
+represent view instance, the \verb|<merge />| tag comes in handy.
+
+When the LayoutInflater encounters this tag, it skips it and adds the
+\verb|<merge />| children to the \verb|<merge />| parent.
+
+So in this example, it's better to replace FrameLayout with merge:
+\begin{verbatim}
+<merge xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <ImageView  
+        android:layout_width="fill_parent" 
+        android:layout_height="fill_parent" 
+    
+        android:scaleType="center"
+        android:src="@drawable/golden_gate" />
+    
+    <TextView
+        android:layout_width="wrap_content" 
+        android:layout_height="wrap_content" 
+        android:layout_marginBottom="20dip"
+        android:layout_gravity="center_horizontal|bottom"
+
+        android:padding="12dip"
+        
+        android:background="#AA000000"
+        android:textColor="#ffffffff"
+        
+        android:text="Golden Gate" />
+
+</merge>
 \end{verbatim}
 
+So both the \verb|textView| and the \verb|ImageView| will be added directly to
+the top-level \verb|FrameLayout|. The result will be \emph{visually the same but
+the view hierarchy is simpler}
 
+The \verb|<merge />| can be useful in other situations. For instance, it works
+perfectly when combined with the \verb|<include />| tag. You can also use
+\verb|<merge />| when you create a custom composite view.
 
 
 \end{document}
