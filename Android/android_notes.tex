@@ -248,8 +248,26 @@ public static void setLayoutAnimation2(ViewGroup panel, Context ctx) {
 
 }
 \end{verbatim}
-\subsection{View animation}
+\section{Implementation Overview}
+The implementation of the \verb|startAnimation|:
+\begin{verbatim}
+public void startAnimation(Animation animation) {
+    animation.setStartTime(Animation.START_ON_FIRST_FRAME);
+    setAnimation(animation);
+    invalidateParentCaches();
+    invalidate(true);
+}
+\end{verbatim}
+The View in fact only sets the Animation as an object, the animation object
+doesn't directly works on the View. Instead, the ViewGroup that containing the
+view will be responsible for performing the animation.
 
+The animation is a object that encapsulate the algorithm, it does not directly
+affect the view or view group, instead, it provide the properties and
+transformation matrix for the given time.
+
+A view group may use the animation to get the variable needed to draw the child
+in its \verb|drawChild()| function
 
 \chapter{About XML and Layout}
 \section{Include to Reduce}
@@ -362,6 +380,249 @@ the view hierarchy is simpler}
 The \verb|<merge />| can be useful in other situations. For instance, it works
 perfectly when combined with the \verb|<include />| tag. You can also use
 \verb|<merge />| when you create a custom composite view.
+\chapter{Point free transformation in Android}
+There are two major flaws with the android's view (w.r.t multi touch iteration):
+\begin{itemize}
+\item Android views are \emph{always dran as rectangles}. Rotation and Scaling
+transformations \textbf{do not affect the view's orientation}. For instance, an
+image view may be rendered with a rotation of 45 degree. In actuality, the
+drawing of the bitmap is rotated but \emph{the view remains rectangular} w.r.t
+its parent container.
+\item Multiple touch Events are not bound accurately to the view, actually being
+touched by the pointer. For example, if there are two image views in a
+particular layout. When touching a view with a single finger, there is no
+problem. A touch on image A would raise a touch event indicating that view A is
+touched and likewise for image b. But if iamge A is touched and then image B is
+touched with a second finger, \emph{the touch event raised by the second finger
+would still indicate that image A is being touched by this pointer}. 
+\end{itemize}
+Hack:
+\begin{itemize}
+\item Creating a custom view (e.g Photograph.java) that allows for translation,
+rotation and scaling
+\item Creating a mechanism for \emph{touch points to be accurately tracked and
+mapped at any point in time}.
+\end{itemize}
+\section{The View (photograph)}
+A view is a box that is capable of holding a drawing inside it. The logic of
+creating this drawing is held in the view's \verb|onDraw()| method. However,
+when you speak about applying various transformations, the view dimensions
+remain constant and cannot be dynamically changed from within the view.
+\textbf{The view dimensions are controlled by the view's parent}.
 
+Consider an image view with a gry background. When the image is rotated or
+scaled, the view dimensions don't change to accommodate the changes' orientation
+or size. This leads to \textbf{clipping out of the image along the view edges}.
 
+In order to achieve the kind of functionality in the MS surface, we need to do
+something radically different. Imagine a sheet of transparent glass on which a
+drawing of a red triangle is made. Now imagin anohter sheet of glass on which a
+drawing of a blue rectangle is made. If the sheets are piled on top of one
+another and you look from top, the combined effect will seem like a single sheet
+of glass.
+
+And if one of these objects was rotated (sheet stays fixed, but the drawing is
+rotated), it would seem as if merely the object that rotated.
+
+The same concept can be applied to Android views. We can create a custom view,
+which spans the entire area of its parent, and applies the various
+transformations to its drawings based on touch event. The touch events will
+cause the view to translate, rotate or scale.
+
+That si the basic concept behind the design of the 'Photograph' class. A viwe of
+this class creates a drwing. It provides routines which allow the app developer
+to rotate, translate and scale this drawing. It has a transparent background to
+create the necessary illusion of depth invariance. The clipping that will occur
+in this case would be along the edges of the parent and this is "visually
+acceptable"
+
+Problem: By creating a view where the drawing occupies only a part of the area,
+we force the user to connect only with the part of the view that contains this
+drawing. To a user, only the part of the view that is drawn upon is "relevant",
+the rest is just blank space.
+
+In our approach we've segregated the view into two areas - the drawing (active
+region) and blank space (passive region). Unfortunately, any contact with this
+view, whether on the active or the passive region, will raise an event at the
+application layer. Henceforth, we need to provide a method for the app developer
+to easily distinguish between the active and passive regions based on the point
+of contact.
+
+To achieve this, we shall create a \emph{region of interest} in the view's
+structure. This region is nothing but a \textbf{set of coordinates} representing
+teh four conrners of the picture. As the picture is rotated, scaled or
+transformed, these coordinates will be updated there by creating a mechanism for
+detecting the active region.
+
+Whenever a touch event occurs, you can detect whether the point of contact lies
+in this region of interst using some simple math. The app level code only has to
+use an API which takes in the (x,y) coordinate of touch point and returns
+whether these coordinates lie within the region of interest or not.
+
+Another problem: Since views are stacked one on top of the other, any touch
+event would always point to the top most view.
+
+Since each view is a unique individual element which is disconnected with all 
+the other views in this pile, it is the job of the application programmer to 
+find out which view is intended to be touched by the user. This is a trivial 
+task. All you have to do is tie your touch events to your parent container 
+(shown as the dark gray plane shown in the image above). For every touch event,
+ loop through all children (going from top to bottom) and use the region of 
+ interest to figure out which view was touched.
+
+ If the touch point lies in a view's region of interest, then this was the view
+ which the user intends to interact with.
+
+ \section{Unerstanding Multi-touch on Android(2.2)}
+Imagine that there are two standard android image views - they aren’t spread 
+over the entire screen and have distinct and limited space available to them 
+(so there is no stacking).
+
+When you use only one touch point (the fist point to touch the screen - let’s 
+call it primary point), all is well, but when a second point (secondary point)
+ makes contact, the view indicated is incorrect. The second point touches the
+  red view but the event still maintains that the blue view is touched by the
+second pointer. While it may be easy to detect how many points are touching the
+screen at a given time, it is not easy to figure out which viwe is actually
+being touched by the secondary points.
+
+Let's look into some of the properties of touch point in android, any touch
+poitn's life time can be defined between:
+\begin{itemize}
+\item the time it making contenct (Action Down)
+\item the time it is lifted off (Action Up);
+\end{itemize}
+During its lifetime, the point may move around anywhere on the screen (Action
+Move). 
+
+In the lifetime, it can be uniquely identified among all the points in the
+screen by a \textbf{pointer ID}.
+
+During action down and action up, we can easily and accurately determine which
+pointer ID has caused the event. During action move, we don't have this accuracy
+and hence we must check all the pointers currently touching the screen and
+determine ourselfves which one has moved. 
+
+The standard approach towards tracking touch points is by using a Map. This map
+is basically an index where in the pointer ID is used as a key and the values
+stored against this key is the state of the pointer (down, moving or up) and its
+last known corrdinates.
+
+What we can do is implement an architecture which can mimic the correct binding
+as it should be. In order to do that, we will create an addtional entry in the
+map that created previously. Whenever a pointer goes down on the screen, we will
+determine which view it has touched. We will then make entries in two places -
+one in the map and the second in the view itself.
+
+Our goal is to know two things at any point in time:
+\begin{itemize}
+\item if we pull up a touch point from the map, we must be able to say which
+view this point is operating on. So in our map, we will store an additional
+entry(along with coordinate inof) which indicates the view that this pinter ID
+was last associated with.
+\item If we pull up a view, we must be able to say which touch points are
+currently touching this view. We will create a small array of touch points
+inside this view. This array will be populated as and when touch points are
+pressed onto the view.
+\end{itemize}
+The map that is used to track the various touch pointers must be updated after
+any and every touch event. And by knowing how many points are currently
+operating on a view, we can easily choose which transformation needs to be
+performed. 
+\section{Logic behind transformations}
+The Canvas is an object that allows us to do the drawing in any view (be it a
+standard view or a custom view such as our own). 
+
+When an artist creates a painting, he draws on the canvas and later frames the
+picture on a wall. The wall is the view. The canvas is what holds the drawing or
+the picture. If you wanted to rotate the picture, you don't rotate the wall, you
+simply rotate the canvas and draw teh picture as you would have drawn it if it
+was straitg.
+
+This exactly what the Canvas ojbect does. We simply apply the transformation to
+the canvas and paint the picture on it. The picture will then appear to be
+shifted rotated. 
+
+Now the logic:
+\begin{enumerate}
+\item Whenever a touch point goes down, its entry is inserted into the map or
+the index. Whenever the same pionter moves, we get the new coordinates of this
+touch point. This information is made avaliable through a move action in the
+touch event.
+\item Sice we can uniquely indentify the touch point using the Pointer ID, we
+have inofrmation about two states of this point:
+\begin{itemize}
+\item One state is was in the past(when it went down.
+\item The other is more recent(when it has moved from its earlier position).
+\end{itemize}
+Use the dispalcement to draw canvas object. This will be a movement with single
+finger.
+\item Whenever you get a move event, you check which pointer has moved. This is
+easily done by computing the displacement of each pointer, currently on the
+screen. The pointer which have non zero values have shifted. 
+\item Now you pull out the info for these pointers from the map. This info also
+ contains the views they were last associated with, these views will know
+ exactly which pointers are touching them.
+\item if the nubmer of points touching this view is more than one, then all you
+have to do is pull out the previous values of tehse points from the map.(Views
+will give you the IDs, use those IDs to get the old coordinates available with
+you.
+\item You will have two lines of the two displacement. The difference in sizes of
+these two lines will tell you how much to scale and the difference in angles
+will tell you how much to rotate
+\end{enumerate}
+\chapter{Input Method}
+\section{Architecture Overview}
+There are three primary parties involved in the input method framework(IMF)
+architecture:
+\begin{description}
+\item [Input Method Manager] Manages the intereaction between all other parts.
+It is expressed as the \textbf{client-side API} here which exists in each
+application context and communicates with global system service that manages the
+interaction across all process.
+\item [Input Method(IME)] implements a particular interaction model allowing th
+e user to generate text. The system binds to current input method that is use,
+causing it to be created and run,and tells it when to hide and show its UI.
+\item [Client Application] Arbitrate with the input method manager for input
+focus and control over the state of IME. Only one such client is ever active at
+a time.
+\end{description}
+\subsection{InputMethodService}
+InputMethodService provides a starndard implementation of an InputMethod, which
+final implementations can derive from and customize.
+
+In addition to the normal Service lifecycle methods, this class introduces some
+new specific callbacks that most subclass will want to make use of:
+\begin{description}
+\item [onInitializeInterface()] for user-interface initialization, in
+particulaar to deal with configuration changes while the service is running.
+\item [onBindInput()] to find out about switching to a new client
+\item [onStartInput(EditorInfo, boolean)] to deal with an input session starting
+with the client.
+\item [onCreateInputView(),onCreateCandidatesView(), and
+onCreateExtractTextView()] for non-demand generation of the UI.
+\item [onStartInputView(EditorInfo, boolean)] to deal with input starting within
+the area of IME.
+\end{description}
+An input method has significant discretion in how it goes about its work:
+\begin{itemize}
+\item The \verb|InputMehtodService| provides a basic framework for standard UI
+elements, but it is up to a particualr implementor to decide how to use them.
+
+All of these elements are placed together in a single window managed by the
+InputMethodService. It will execute callbacks as it needs information about
+them, and privdes APIs for programmatic control over them. They layout of theses
+elements is explicitly defined:
+\begin{itemize}
+\item The soft input view, is placed at the bottom of the screen.
+\item The candidates view, if currently shown, is placed above the soft input
+view.
+\item If not running full screen, the application is moved or resided to be
+above these views;
+\subsubsection{Soft Input View}
+Most implementations will simply have their own view doing all of this work, and
+return a new instance of it when \verb|onCreateInputView()| is called. As long
+as the input view is visible, you will see user interaction in that view and can
+call back on the InputMethodService to interact with the application as
+appropriate.
 \end{document}
