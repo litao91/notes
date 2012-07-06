@@ -625,4 +625,20 @@ return a new instance of it when \verb|onCreateInputView()| is called. As long
 as the input view is visible, you will see user interaction in that view and can
 call back on the InputMethodService to interact with the application as
 appropriate.
+\subsection{CandidateView}
+Often while the user is generating raw text, an input method wants to provide
+them with a list of possible interpretations of that text that can be selected
+for use.This is accomplished with the candidates view, and like you the soft
+input view you implement \verb|onCreateCandidatesView()| to instantiate your own
+view implementing your candidates UI.
+
+To control whether the candidates view is shown, you will use
+\verb|setCandidatesViewShown(boolean)|. Note that because the candidate view
+tends to be shown and hidden a lot, it does not impact the application UI in the
+same way as the soft input view.
+
+\subsection{Generating Text}
+This is done through calls to the \verb|InputConnection| interface to the
+application, which can be retrieved from \verb|getCurrentInputConnect()|
+
 \end{document}
