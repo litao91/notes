@@ -2,8 +2,91 @@
 \usepackage{parskip}
 \usepackage[top=1.5cm, left=1cm, right=1cm, bottom=2.5cm]{geometry}
 \usepackage{fontspec}
+\usepackage{graphicx}
 \setmainfont{DejaVu Serif}
 \begin{document}
+\chapter{Android IPC Mechanism}
+\section{Overview}
+IPC = Inter-process Communication. The IPC in android is Binder, a lightweiget
+RPC(Remote Procedure Communication) mechanism.
+
+To solve to background problems: Applications and services may run in separate
+processes but must communicate and share data, IPC can introduce significant
+processing overhead and security hold.
+
+\paragraph{IPC Abstraction}
+\begin{description}
+    \item [Intent] The highest level abstraction
+    \item [AIDL] Android Interface Definition Language, inter process method
+        invocation.
+    \item [Binder] Kernel driver
+    \item [ashmem] shared memory.
+\end{description}
+\begin{figure}
+    \centering
+    \includegraphics[scale=0.5]{IPC_invo.png}
+    \caption{Innovation of android IPC}
+\end{figure}
+
+
+\section{Intent:simple low level}
+Intent: The highest level abstraction IPC in Android. Requests are queued and
+handled sequentially.
+
+The android system uses Intent object to enable applications to specify an
+Activity or Service. Intent objects also deliver data from one app to another.
+
+It's loosely coupling: The sender need not choose the receiver, the sender can
+specify "action". Then proper receiver is chosen and handles it.
+\section{AIDL and Remote Methods}
+The overall structure of android IPC system consists of four major block, one in
+kernel space, and the other three in use space. The overall structure is shown
+in the diagram below:
+\begin{figure}
+    \centering
+    \includegraphics[scale=0.5]{IPC_structure.png}
+    \caption{Overall architecture of the Android IPC system}
+\end{figure}
+\begin{itemize}
+    \item \verb|BinderDriver|: the core of IPC system. It \textbf{passes data} between a
+        ServiceProvider and a ServiceUser. This kernel component is provide by
+        Android.
+    \item \verb|ServiceProvider|: Provides some kind of service. It \textbf{parses the
+        received RPC data} from the BinderDriver and \textbf{And does the real
+        work}.
+    \item \verb|ServiceManager|: This is a special singleton ServiceProvider
+        that \textbf{provides service manager services} for other service providers.
+    \item \verb|ServiceUser|: This is the client. It \emph{remote calls the
+        ServiceProvider by generating an RPC} and sending it to the
+        BinderDriver. Application developer typically write their own
+        ServiceUser as part of their application.
+
+\end{itemize}
+The typical flow of events for fictitious MultServiceProvider
+
+
+\begin{figure}
+    \centering
+    \includegraphics[scale=0.5]{AIDL.png}
+    \caption{AIDL}
+\end{figure}
+\subsection{Use case: Who calls "onPause" in Activity}
+\begin{enumerate}
+    \item ActivityManager will Call "schedulePauseActivity" across process
+    \item The binder thread will queue the request, and send message by Handler.
+    \item The Main thread will call the "onPause" in the Looper.
+\end{enumerate}
+\begin{figure}
+    \centering
+    \includegraphics[scale=0.5]{onPauseCall.png}
+    \caption{Calling onPause}
+\end{figure}
+
+
+
+
+
+
 \chapter{Classes and Methods}
 \section{Scroller}
 \subsection{Class Overview}
@@ -611,14 +694,14 @@ elements, but it is up to a particualr implementor to decide how to use them.
 
 All of these elements are placed together in a single window managed by the
 InputMethodService. It will execute callbacks as it needs information about
-them, and privdes APIs for programmatic control over them. They layout of theses
+them, and provides APIs for programmatic control over them. They layout of theses
 elements is explicitly defined:
-\begin{itemize}
 \item The soft input view, is placed at the bottom of the screen.
 \item The candidates view, if currently shown, is placed above the soft input
 view.
 \item If not running full screen, the application is moved or resided to be
 above these views;
+\end{itemize}
 \subsubsection{Soft Input View}
 Most implementations will simply have their own view doing all of this work, and
 return a new instance of it when \verb|onCreateInputView()| is called. As long
@@ -641,4 +724,14 @@ same way as the soft input view.
 This is done through calls to the \verb|InputConnection| interface to the
 application, which can be retrieved from \verb|getCurrentInputConnect()|
 
+This interface allows you to generate raw key events or, if the target supports
+it, directly edit in strings of candidates and commit
+
+Information about what the target is expected and supports can be found through
+the \verb|EditorInfo| class, which is retrieved with
+\verb|getCurrentInputEditorInfo()|
+
+When the user switches between input targets, you will receive calls to
+\verb|onFinishInput()| and \verb|onStartInput(EditorInfo, boolean)|. You can use
+these to reset and initialize your input state for the current target.
 \end{document}
