@@ -1,0 +1,655 @@
+\documentclass[a4paper,12pt]{book}
+\usepackage{parskip}
+\topmargin -1.5cm
+\oddsidemargin -0.04cm
+\evensidemargin -0.04cm
+\textwidth 16.59cm
+\textheight 25cm
+
+\author{LI Tao}
+\title{CPP General Notes}
+
+\begin{document}
+\maketitle
+\chapter{Basic Concepts}
+\section{External Variable}
+An external variable is a variable defined outside funciton block. On the other hand, a local (automatic) variable is a variable defined inside a fucntion block. That is variables that can be accessed by name by any function. 
+
+Because external variables remain in existence premanently, rather than appearing and disappearing as functions are called and exited, they retain their values even after the functions that set them have returned.
+
+The extern keyword means "declare without defining". It is a way to force adeclaration without a definition.
+
+An external variable must be defined, exactly once, outside of any function; this sets aside storage for it. The variable must also be declared in each function that wants to access it; this states the type of the variable.
+
+An external variable may also be declared inside a function. In this case the extern keyword must be used, otherwise the compiler will consider it a definition of local variable.
+
+The extern keyword applied to a function prototype does absolutely nothing. A function prototype is always a declaration and never a definition.
+
+An external variable can be accessed by all the functions in all the modules of a program. It is a global variable.
+\section{Declarations}
+\paragraph{Declarations:} Associate a type with a name.
+\paragraph{Definition} define an entity for the name to which they refer. When a variable is defined, the compiler allocates memory for that variable and possible also initializes its contents to some value.
+For primitive type, declaration also definition (without extern keyword), because the entity is the appropriate amount of memory to be used as a variable.
+
+One definition and many declarations.
+
+\chapter{Source Files and Programs}
+\section{Separate Compilation}
+A file is the tradition unit of compilation.
+
+A user presents a \emph{source file} to compiler. The file is preprocessed; that is macro processing and \verb|#include|. The result of preprocessing is called a \emph{translation unit}.
+
+To enable separate compilation, the programmer must supply declaratins providing the type information needed to analyze a translation unit in isolation from the rest of the program. The declarations in a program consisting of many separately compiled parts must be consistent in exactly the same way the declarations in a program consisting of a single source file must be. In particular, a linker can detect many kinds of inconsistencies.
+
+The organization of a program into source files is commonly called the \emph{physical structure}
+
+\section{Linkage}It is the programmer's task to ensure that every namespace, class, function, etc.\ is properly declared in every translation unit in which it appears and that all declarations referring to the same entity are consistent;declaration of a variable is just a declaration and not a definition. \footnote{Declaration: types must be specified to inform the compiler to what kind of entity the name refers. Most of declaration are also definitions; that is, they also define an entity for the name to which they are refer; Some are not also definitions; That is the entity they refer to must be defined elsewhere.  The keyword \emph{extern} indicates that it is only adeclaration}
+
+Linkage errors cannot detected by a compiler that looks at only one file at a time. Most, however, are detectable by the linker. 
+\paragraph{Note} A variable defined without an initializer in the global or a namespace scope is nitialized by default. 
+
+An inline function must be defined by identical definitions in every translation unit in which it is used.
+
+Combination of external linkage and inlining is banned to make life simpler for compiler writers.
+
+By default, \verb|const|s and \verb|typedef|s have internal linkage.
+
+Global variables that are local to a single compilation unit are a common source of confusion and are best avoided. To ensure consistency, you should usually place global consts and inlines in header files only.
+
+An unnamed namespace can be used to make names local to a compilation unit. 
+\subsection{Header Files}
+The types in all declarations must be consistent. Consequently, the source code submitted to the compiler and later linked together must be consistent. One imperfect but simple method of achieving consistency for declarations in different translation units is to \verb|#include| \emph{header files} containing interface information in source codes.
+
+\paragraph{Note} spaces are significant within the \verb|< >| or ""
+
+A header file may contain:
+
+\begin{tabbing}
+\hspace{1cm}\= Named namespaces\hspace{3cm}\quad\= \verb|namespace N{/*...*/}|\\
+	\>Type definitions \>\verb|struct Point{int x, y;};|\\
+	\>Template declaractions \>\verb|template<class T> class Z;|\\
+	\>Template definitions \>\verb|Template<class T> calss V{/*...*/}|\\
+	\>Function declarations \>\verb|extern int strlen(const char*);|\\
+	\>Inline function definitions \>\verb|inline char get(char* p){return *p++}|\\
+	\>Data declaraction \>\verb|extern int a;|\\
+	\>Constant definition\\
+	\>Enumerations\\
+	\>Name declarations \>\verb|class Matrix;|\\
+	\>Include directives \>\verb|#include <algorithm>|\\
+	\>marco definitions\\
+	\>Conditional compilation directives \>\verb|ifdef __cplusplus|\\
+	\>comments\\
+
+
+\end{tabbing}
+
+\subsection{The One-Definition Rule}
+Two definitions of a class, template or inline function are accepted as examples of the same unique definition if and only if:
+\begin{enumerate}
+\item they appear in different translation units, and
+\item they are token-for-token identical, and
+\item the meannings of those tokens are the same in both translation units.
+\end{enumerate}
+The technique of placing shared definitions in headers and \verb|#include|ing them doesn't protect against this last form of ODR violations. Local typedefs and macros can change the meaning of \verb|#include|d declarations.
+
+The best defense against this kind of hackery is to make headers are self-contained as possible.
+\subsection{Linkage to Non-C++ Code}
+One can specify a \emph{linkage} convention to be used in an \verb|extern| declaration. 
+
+\chapter{Template}
+\section{Function Template}
+When a template function is called, the types of the function argument is called, the types of the function arguments determine which version of the template is used; That is, the template arguments are deduced from the function arguments. 
+\subsection{Function Template Arguments}
+A compiler can deduce type and non-type arguments from a call, provided the function argument list uniquely identifies the set of template arguments. 
+
+You may have as may template parameters as you like. However, in function template, no default template arguments can be specified.
+
+We can also specify only the first arguments explicitly and to allow the deduction process to derive the rest.
+
+\paragraph{Note} Class template parameters are never deduced.
+
+If a template argument cannot be deduced from the template function arguments, we must specify it explicitly.
+\paragraph{Note} One common use of explicit specification is to provide a return type for a template function.
+\subsection{Function Template Overloading}
+Templates are compiled twice:
+\begin{enumerate}
+\item Without instantiation, the template code itself is checked for correct syntax. Syntax errors are discovered, such as missing semicolons.
+\item At the time of instantiation, the template code is checked to ensure that all calls are valid. Invalid calls are discovered, such as unsupported function calls.
+
+\end{enumerate}
+This leads to an important problem in the handling of templates in practice: When a function template is used in a way that triggers its instantiation, a compiler will (at some point) need to see that template's definition. This breaks the usual compile and link distinction for ordinary functions, when the declaration of a function is sufficient to compile its use. So usually each template is implemented inside a header file by using inline function.
+
+We apply the usual function overload resolution rules:
+\begin{enumerate}
+	\item Fore the set of function template specializations that will take part in overload resolution. Do this by considering each function template and deciding which template arguments, if any, would be used if no other function templates or functions of the same name were in scope.
+	\item If two template functions can be called and one is more specialized than the other, consider only the most specialized template function in the following steps.
+	\item Do overload resolution for this set of functions, plus any ordinary functions as fro ordinary functions. If a template function argument has been determined by template argument deduction, that argument cannot also have promotions, standard conversions or user-defined conversion applied. (Exactly match is preferred).	
+	\item If a function and a specialization are equally good matches, the function is preferred;
+	\item If no match is found, the call is an error.
+\end{enumerate}
+It is also possible to specify explicitly an empty tmeplate argument list. This syntax indicates that only templates may resolve a call, but all the template parameters should be deduced from the calling argument.
+
+\paragraph{Note} automatic type conversion is not considered for templates but is considered for ordinary functions.
+\section{Using Template Argument to Specify Policy }
+Consider how to sort strings. The sorting criteria are built neither into the container nor into the element type. Instead, the criteria must be supplied when a specific operation needs to be performed. 
+
+General solution can be defined not just for a specific type but also for a specific use of a specific type. 
+
+Passing the comparison operations as a template parameter has two significant benefits compared to alternatives such as function pointers:
+\begin{itemize}
+	\item Several operations can be passed.
+	\item operators may trivial to inline and ma require exception attention from a compiler.
+\end{itemize}
+\paragraph{Note} Each class generated from a class template gets a copy of each \emph{static} member of the class template
+
+\subsection{Default Template Parameters}
+We can supply the normal convention as a default template arguments:\\
+\verb|template<class T, class C=Cmp<T> >|
+
+\subsection{Specialization}
+By default, a template gives a single definition to be used for every template argument (or combination of template arguments) that user can think of. This doesn't always make sense for someone writing a template. Many design concerns can be addressed by providing alternative definitions of the template and having the compiler choose between them based on the template arguments provided where they are use. Such are called \emph{user-defined specializations} or \emph{user-specialization}
+
+\emph{Specialization} Example:a version of Vector for pointers to void:
+\begin{verbatim}
+template<>
+class Vector<*void>{
+    void** p;
+    //...
+    void*& operator[] (int i);
+}
+\end{verbatim}
+
+This specialization can be used as the common implementation for all Vector of pointers. This is a \emph{complete specialization}
+
+The \verb|template<>| prefix says that this is a specialization that can be specified without a template parameter. The template arguments for which the specialization is to be used are specified in <> brackets after the name.
+
+The \emph{<void*>} says that this definition is to be used as the implementation of every Vector for which T is void*. 
+
+The \emph{Vector<void*>} is a complete specialization. That is there is no template parameter to specify or deduce when we use the specialization. Vector<void*> is used for Vectors used like this:\\\verb|Vector<void*> vpv;|
+
+To define a specialization that is used for every Vector of pointers and only for Vectors of pointers,we need a \emph{partial specialization}:
+\begin{verbatim}
+template<class T>
+class Vector<T*>:private Vector<void*>{
+    \\..
+}
+\end{verbatim}
+
+The specialization pattern <T*> after the name says that this specialization is to be used fro every pointer type; This definition is used for every Vector with a template argument that can be expressed as T*
+
+In Partical Specialization, you can specify special implementations for particular circumstances, but some template parameters must still be defined by the user.
+
+\paragraph{Note} When a partial specialization is used, a template parameter is deduced from the specialization pattern. In particular for \\\verb|Vector<Share*>, |\\ T is Shape and not Shape*.
+
+It is important that this refinement of implementation of Vector is achieved without affecting the interface presented to users. It's a way of specifying alternative implementations for different uses of a common interface.
+
+The general information supplied must be declared before any specialization.
+
+\subsubsection{Order of Specialization}
+One specialization is \emph{more specialized} than another if every argument list that matches it specialization pattern also matches the other, but not vice versa.
+
+The most specialized version will be preferred preferred over the others in declarations of objects, pointers and in overload resolution.
+\subsection{Derivation and Templates}
+Example:
+\begin{verbatim}
+template<class T>class vector{/*...*/}
+template<class T>class Vec:public vector<T>{/*...*/}
+\end{verbatim}
+Having the same template parameter for the base and derived class is the most common case, but it is not a requirement. 
+\subsection{Member Templates}
+A class or a class template can have members that are temselves templates.
+\subsection{Inheritance Relationship}
+There is no relationship between two classes generated from a single class template, for Example:
+\begin{verbatim}
+class Shape{/***/};
+class Circle:public Shape{/*....*/};
+\end{verbatim}
+Given these declarations, people sometimes try to treat a \verb|set<Circle*>| as a \verb|set<Shape*>|
+This is serious logical error based on a flawed argument:"a circle is a shape, so a set of Circles is also a set of shapes, therefore, I should be able to use a set of Circles as Shapes." The "therefore" part of this argument doesn't hold. The reason is that a set of Circles guarantees that the member of the set are Circles; a set of Shapes does not provide that guarantee.
+\subsection{Template Conversions}
+Need information about conversion operators in chapter 11.4
+\subsection {Source Code Organization}
+There are two obvious ways of organizing code using templates:
+\begin{enumerate}
+\item Include template definitions before their use in a translation unit;
+\item Include template declarations only before their use in a translation unit, and compile their definitions separately.
+\end{enumerate} In addition, template functions are sometimes first declared, then used and finally defined in a single translation unit;
+
+In the first method, the definition of the function and all declarations it depends on are \verb|#included| in several different compilation units. It is up to the compiler to generate code when needed and to optimize the process of reading redundant definitions. This strategy treats template functions the same way as inline functions.
+
+One problem: Everything on which the definition of the function depends is added to each file using it, thus increase the amount of information that compiler must process.
+
+Separate compilation:*.c holds all of the information needed to define out(), and out.h holds only what is needed to call it. A user includes only the declaraction.
+
+Then the definition in *.c is compiled separately, and it is up to the implementation to find the definition of the function when needed.
+
+Note that to be accessible from other compilation units, a template definition must be explicitly declared export.
+
+Generally, inline function san small template functions that primarily call other template function are candicates for the first strategy. Larger template usually use the second.
+\subsection{Tricky Basics}
+\subsubsection{Keyword typename}
+The keyword typename is to clarify that an identifier inside a template is a type. Example:
+\begin{verbatim}
+template <typename T>
+class MyClass{
+    typename T::SubType* ptr;
+    ...
+}
+\end{verbatim}
+The second \verb|typename| is used to clarify that \verb|SubType| is a type defined within class T. Without \verb|typename|, \verb|SubType| would be considered a static member.
+
+A typical appolication of \verb|typename| is the access to iterators of STL containers in template code.
+
+\subsubsection{The .template Construct}
+Example:
+\begin{verbatim}
+template<int N> 
+void printBitset (std::bitset<N> const& bs) 
+{ 
+    std::cout << bs.template to_string<char,char_traits<char>, 
+	                                           allocator<char> >(); 
+}
+\end{verbatim}
+Without the extra use of template, the compiler does not know that the less-than token that follows is not really "less than" but the begining o fa template argument list.
+\paragraph{Note} This is a problem only if the construct before the period depends on a template parameter. In our example, the parameter bs depends on the template parameter N.
+\subsubsection{Template Template Parameters}
+It can be useful to allow a template parameter itself to be a class template. 
+
+To use a different internal container for stacks, the application programmer has to specify the type twice. Thus, to specify the type of the internal container, you have to pass the type of the container and the type of its element again.
+\begin{verbatim}
+Stack<int, std::vector<int> > vStack; //integer stack that uses a vector
+\end{verbatim}
+
+Using template template parameters allows you to declare the Stack class template by specifying the type of the container without respecifying the type of its elements:\\
+\verb|stack<int, std::vector> vStack;//integer stack that uses a vector|
+Example:
+\begin{verbatim}
+template <typename T, 
+          template <typename ELEM> class CONT = std::deque > 
+class Stack { 
+    private: 
+        CONT<T> elems;         // elements 
+
+    public: 
+        void push(T const&);   // push element 
+        void pop();            // pop element 
+        T top() const;         // return top element 
+        bool empty() const {   // return whether the stack is empty 
+        return elems.empty(); 
+        } 
+}; 
+\end{verbatim}
+
+The difference is that the second template parameter is declared as being a class template:\\
+\verb|template <typaname ELEM> class CONT|
+
+This paramter has to be a class template, which is instantiated for the type that is passed as the first template parameter:\\
+\verb|CONT<T>|
+
+In general, you can instantiate a template template paramter with any type inside a class template.
+
+A template template argument must be a template with parameters that \emph{exactly} match the parameters of the template template parameter it substitutes. Default template arguments are not considered.
+\subsubsection{Zero Initialization}
+It is possible to call explicitly a default constructor for built-in types with zero (or false for bool). That is, int() yields zero.
+\subsubsection{Using String Literals as Argument for Function Templates}
+String literals have different array types depending on their length. That is, "apple" and "peach" have type const \verb|char[6]| whereas "tomato"has type const \verb|char[7]|. 
+
+However, if you declare nonreference parameters, you can subsitute them with string literals of different size. The explaination for this behavior is that during argument deduction array-to-pointer conversion (often called decay) occurs only if parameter does not have a reference type.
+
+To solve this problem you can:
+\begin{itemize}
+\item Use nonreferences instead of reference.
+\item Overload using both reference and nonreference parameters.
+\item Overload with concrete types (such as std::string)
+\item Overload with array types.For example:
+\begin{verbatim}
+template<typename T, int N, int M>
+T const* max (T const (&a) [N], T const (&b) [M]){
+    return a<b ? b:a;
+}
+\end{verbatim}
+\item force application programmers to use explicit conversions.
+\end{itemize}
+\section{Using Templates in Practice}
+\subsubsection{The Inclusion Model}
+Include *.cpp file at the end of *.h file or by including *.cpp file in every doc-C file that uses the template, to avoid to linking error.
+
+This approach has considerably increased the cost of including the header file.
+
+Another observation about the inclusion approach is that noninline function templates are distinct from inline functions and macros in an important way: They are not expanded at the call side. Instead, when they are instantiated, they create a new copy of a cuntion.
+
+Finally, we need to point out that what applies to the ordinary function in our example also applies to member functions and static data members of class templates, as well as to member function templates.
+\subsubsection{Using this->}
+For class templates with base classes, using a name x by itself is not always equivelent to this->x, even though a member x is inheritanted. For example:
+\begin{verbatim}
+template<typename T>
+class base{
+    public:
+        void exit();
+};
+
+template <typename T>
+class Derived: Base<T>{
+    public:
+        void foo(){
+	    exit(); //calls external exit() or error
+	}
+};
+\end{verbatim}
+
+In this example, for resolving the symbol exit inside \verb|foo()|, \verb|exit()| defined in Base is \emph{never} considered. Therefore, either you have an error, or another \verb|exit()| is called.
+
+\subsubsection{Explicit Instantiation}
+The C++ standard offers a construct to instantiage tempates manually: The explicit instantiation directive.
+
+Examples:
+\begin{verbatim}
+// basics/myfirstinst.cpp 
+
+#include "myfirst.cpp" 
+
+// explicitly instantiate print_typeof() for type double 
+template void print_typeof<double>(double const&); 
+\end{verbatim}
+The explicit instantiation directive consists of the key word \verb|template| followed by the fully substituted declaration of the entity we want to instantiate.
+\begin{verbatim}
+// explicitly instantiate a constructor of MyClass<> for int 
+template MyClass<int>::MyClass(); 
+
+// explicitly instantiate a function template max() for int 
+template int const& max (int const&, int const&); 
+\end{verbatim}
+You can also explictly instantiate a class template, which is short for requesting the instantiation of all its instatiatable members. 
+\begin{verbatim}
+// explicitly instantiate class Stack<> for int: 
+template class Stack<int>; 
+
+// explicitly instantiate some member functions of Stack<> for strings: 
+template Stack<std::string>::Stack(); 
+template void Stack<std::string>::push(std::string const&); 
+template std::string Stack<std::string>::top(); 
+
+// ERROR: can't explicitly instantiate a member function of a 
+//        class that was itself explicitly instantiated: 
+template Stack<int>::Stack(); 
+\end{verbatim}
+There should be, at most, one explict instantiation of each distinct entity in a program.
+\subsubsection{The Separation Model}
+\paragraph{The Keyword export}
+
+In principle it is quite simple to make use of export facility: Define the template in just one file, and mark that definition and all its nondefinng declarations with the key word export. 
+
+For example:
+\begin{verbatim}
+// basics/myfirst3.hpp 
+
+#ifndef MYFIRST_HPP 
+#define MYFIRST_HPP 
+
+// declaration of template 
+export 
+template <typename T> 
+void print_typeof (T const&); 
+
+#endif // MYFIRST_HPP 
+\end{verbatim}
+Exported templates can be used \emph{without their definition being visible.} In other word, the point where a template is being used and the point where it is defined can be in two different translation unit. 
+
+Within a preprocessed file (that is, within a translation unit), it is sufficient to mark the first declaration of a template with \verb|export|. Later redeclarations, including definitions, implicitly keep that attribute. On the other hand, it is perfectly acceptable to provide redundant \verb|export| keyword.
+
+The keyword \verb|export| really applies to function templates, member functions of class templates, member function templates and class template. It implies that every one of its exportable member is exported, but \emph{class template temselves are not actually exported}. You can still have implicitly or explicitly defined inline member functions. However, these inline function are not exported:
+\begin{verbatim}
+
+
+rt template <typename T> 
+class MyClass { 
+  public: 
+    void memfun1();      // exported 
+    void memfun2() {     // not exported because implicitly inline 
+        … 
+    } 
+    void memfun3();      // not exported because explicitly inline 
+    … 
+}; 
+template <typename T> 
+inline void MyClass<T>::memfun3 () 
+{ 
+     … 
+} 
+\end{verbatim}
+\subparagraph{Note} The keyword \verb|export| cannot be combined with inline and must always precede the keyword \verb|template|The following is in valid:
+\begin{verbatim}
+template <typename T> 
+class Invalid { 
+  public: 
+    export void wrong(T);      // ERROR: export not followed by template 
+}; 
+
+export template<typename T>    // ERROR: both export and inline 
+inline void Invalid<T>::wrong(T) 
+{ 
+} 
+
+export inline T const& max (T const&a, T const& b) 
+{                              // ERROR: both export and inline 
+    return a < b ? b : a; 
+} 
+\end{verbatim}
+\paragraph{Limitations of the Separation Model}
+\begin{enumerate}
+\item Difficult to implement, most compiler not support it.
+\item Alough \verb|export| may seem quasi-magical, it is not \emph{actually} magic. Ultimately, the instantiation process has to deal with both the place where its definition appears. If the file containning the definition changes, both the file and all the files that instantiate the templates in that file may nee to be recompiled. This is not substantially different from the inclusion approach.
+\item Exported templates may lead to surprising semantic consequences.
+\end{enumerate}
+\paragraph{Preparing for the Separation Model}
+\begin{verbatim}
+// basics/myfirst4.hpp 
+
+#ifndef MYFIRST_HPP 
+#define MYFIRST_HPP 
+
+// use export if USE_EXPORT is defined 
+#if defined(USE_EXPORT) 
+#define EXPORT export 
+#else 
+#define EXPORT 
+#endif 
+
+// declaration of template 
+EXPORT 
+template <typename T> 
+void print_typeof (T const&); 
+
+// include definition if USE_EXPORT is not defined 
+#if !defined(USE_EXPORT) 
+#include "myfirst.cpp" 
+#endif 
+
+#endif // MYFIRST_HPP 
+\end{verbatim}
+By defining or omitting the preprocessor symbol \verb|USE_EXPORT|, we can now select between the two models. If a program defines \verb|USE_EXPORT|, before it includes \verb|myfirst.hpp|, the separation model is used;
+\subsubsection{Templates and inline}
+Declaring short functions to be inline is a common tool to improve the running time of programs. The inline specifier indicates to the implementation that inline substitution of the function body at the point of call is preferred over the usual function call mechanism. 
+
+Both function and templates and inline functions can be defined in multiple translation units. This is ususally achieved by placing the definition in a header file that is included by multiple doc-C files.
+
+This may lead to the impression that function templates are inline by default. However, they're not. If you write a function templates that should be handled as a inline functions, you should use the inline specifier. 
+
+Therefore, many short template functions that are not part of a class definition should be declared with \verb|inline|.
+\subsubsection{Precompiled Headers}
+The \emph{precompiled headers} scheme operates outside the scope of the standard and relies on vendor-specific options.
+
+When a compiler trnaslate a file, it does so starting from the begining of the file and works through to the end. As it process each token from the file (which may come from \verb|#include| files), it adaptsits internal state, include such things as adding entries to a table of symbols so they may be looked up later. While doing so, the compiler may also generate code in object files.
+
+The precompiled header scheme relies on the fact that code can be organzied in such a manner that many file start with the same lines of code. Let's assume for the sake of argument that every file to be compiled starts with the same N lines of code. We could compile these N lines and save the complete state of the compiler at that point in a so-called \emph{precompiled header}. Then, for every file in our program, we can start compilation at line N+1. 
+
+The key to make effective use of precompiled headers is to ensure that -- as much as possible -- files start with a maximum number of common lines of code.
+
+\subsubsection{Debug template programs}
+\paragraph{Tracers}
+
+A tracer is a uesr-defined class that can be used as an argument for a template to be tested. Often, it is written just to meet the requirements of the template and no more than those requirements. More important, however, a tracer should generate a \emph{trace} of the operations that are invoked on it. This allows for example, to verify experimentally the efficiency of algorithms as well as the sequence of operations.
+\section{Basic Template Terminology}
+\subsection{Class Template or Template Class}
+There is some confusion about how a class that is a template is called:
+\begin{itemize}
+\item The term \emph{class template} states that the class is a template. That is, it is a parameeterized description of a family of classes.
+\item The term \emph{template class} on the other hand has been used
+	\begin{itemize}
+	\item as a synonym for class template.
+	\item to refer to classes generated from templates
+	\item to refer to class with a name tha is a template-id.
+	\end{itemize}
+\end{itemize}
+\subsection{Instantiation and Specialization}
+The process of creating a regular class, function, or member function from a template by substituting actual values for its arguments is called \emph{template instantiation}. This resulting entity (class, fuction, or member function) is generally called a \emph{specialization}.
+
+However, in C++ the instantiation process is \emph{not the only way to produce a specialization}. Alternative mechanisms allow the programmer to specify explicitly a declaration that is tied to a special substitution of template parameters. Such a specialization is inroduced by \verb|template<>|:
+\begin{verbatim}
+template <typename T1, typename T2>    // primary class template 
+class MyClass { 
+  … 
+}; 
+
+template<>                             // explicit specialization 
+class MyClass<std::string,float> { 
+  … 
+}; 
+\end{verbatim}
+
+Strickly speaking, this is called a so-call \emph{explicit specialization} (as opposed to an instantiated or generated specialization.
+
+Specialization that still have template parameter are called \emph{partial sepcialization}:
+\begin{verbatim}
+template <typename T>                 // partial specialization 
+class MyClass<T,T> { 
+  … 
+}; 
+
+template <typename T>                 // partial specialization 
+class MyClass<bool,T> { 
+  … 
+}; 
+\end{verbatim}
+When talking about (explicit or partial) specialization, the general template is also called the \emph{primary template}.
+
+\subsubsection{Declarations versus Definitions}
+A \emph{declaration} is a C++ construct that introduces a name into a C++ scope. This introduction always includes a partial classification of that name, but the details are not required to make a a valid declaration.
+
+Declaraction become \emph{definitions} when the details of their strucure are make know or, in the case of variables, when \emph{Storage space must be allocated}. For class type and function definitions, this means a \emph{brace-enclosed body} must be provided. For variables, initialization and a missing \verb|extern| lead to definitions.
+
+
+\subsubsection{Template Argument versus Template Parameters}
+Consider how the name of the template is followed by so-called \emph{template arguments} in angle brackets.
+
+Regardless of whether these argument are themselves dependent on template parameters, the combination of the template name, followed by the argument sin angle brackets, is called a \emph{templates-id}.
+
+It is essential to distinguish between the \emph{template parameter} and \emph{template arguments}. In short you can say " pass \emph{arguments} to become \emph{parameters}." Or more precisely:
+\begin{itemize}
+\item Template parameter are those names that are listed after the keyword \verb|template| in the template declaration or definition.
+\item Template arguments are the items that are substituted for template parameters. Unlike template parameters, template arguments can be more than just "names".
+
+\end{itemize}
+
+A fundamental principle is that any template argument must be a quantity or value that can be determined at compile time.
+
+\chapter{Template in Depth}
+\section{Fundamental in Depth}
+\subsection{Parameterized Declarations}
+Two kinds of templates, both as class members and as ordinary namespace scope declarations:
+\begin{verbatim}
+template <typename T> 
+class List {                     // a namespace scope class template 
+  public: 
+    template <typename T2>       // a member function template 
+    List (List<T2> const&);      // (constructor) 
+    … 
+}; 
+template <typename T> 
+ template <typename T2> 
+List<T>::List (List<T2> const& b) // an out-of-class member function 
+{                                 // template definition 
+    … 
+} 
+template <typename T> 
+int length (List<T> const&);      // a namespace scope function template 
+class Collection { 
+    template <typename T>         // an in-class member class template 
+    class Node {                  // definition 
+        … 
+    }; 
+    template <typename T>         // another member class template, 
+    class Handle;                 // without its definition 
+    template <typename T>         // an in-class (and therefore implicitly 
+    T* alloc() {                  // inline) member function template 
+       …                          // definition 
+    } 
+    … 
+}; 
+template <typename T>             // an out-of-class member class 
+class Collection::Node {          // template definition 
+    … 
+}; 
+\end{verbatim}
+
+Note how member templates defined outside their enclosing class can have multiple \\\verb|template<...>|\\ parameterization clauses: one for the template itself and one for every enclosing class template. The clauses are listed starting from the outer most template.
+
+Function templates can have defualt call arguments just like ordinary function declaractions:
+\begin{verbatim}
+template <typename T> 
+void report_top (Stack<T> const&, int number = 10); 
+
+template <typename T> 
+void fill (Array<T>*, T const& = T());  // T() is zero for built-in types 
+\end{verbatim}
+
+The latter declaraction shows that a default call argument could depend on a template parameter. When teh fill() function is called, the default argument is not instantiated if a second function call argument is supplied. This ensures that no error is issued if the defualt call argument cannot be instantiated for a particular T.
+
+Three other kinds of declaractions can be parameterized using a similar notation:
+\begin{enumerate}
+\item Definitions of member functions of class templates.
+\item Definitions of nested class member of class templates.
+\item Definitions of static data member of class template.
+\end{enumerate}
+\subsubsection{Virtual Member Functions}
+Member function templates cannot be declared virtual. This constraint is imposed because the usual implementation of the virtual function cal mechanism uses a fixed-size table with one entry per virtual function. However, the number of instantiations of a member function template is not fixed until the entire program has been translated. Hence, supporting virtual member function templates would require support for a whole new kind of mechanism in C++ compilers and linkers.
+
+In contrast, the ordinary members of class template can be virtual because their number is fixed when a class is instantiated:
+\begin{verbatim}
+template <typename T> 
+class Dynamic { 
+  public: 
+    virtual ~Dynamic();  // OK: one destructor per instance of Dynamic<T> 
+    template <typename T2> 
+    virtual void copy (T2 const&); 
+                        // ERROR: unknown number of instances of copy() 
+                        //        given an instance of Dynamic<T> 
+}; 
+\end{verbatim}
+\subsubsection{Linkage of Templates}
+Every template must have a name and that name must be nuique within its scope, except that function tempates can be overloaded. 
+
+\paragraph{Note} unlike class types, class templates cannot share a name with different kind of entity:
+\begin{verbatim}
+nt C; 
+class C;  // OK: class names and nonclass names are in a different ''space'' 
+int X; 
+template <typename T> 
+class X;  // ERROR: conflict with variable X 
+struct S; 
+template <typename T> 
+class S;  // ERROR: conflict with struct S 
+\end{verbatim}
+
+Templates names have linkage, but they cannot have C linkage. Nonstandard linkages may have an implementation-dependent meaning.
+\subsubsection{Primary Templates}
+Normal declarations of templates declare so-called primary templates. Such template declaractions are declared without adding template arguments in angle brackets after the template name.
+\begin{verbatim}
+emplate<typename T> class Box;             // OK: primary template 
+template<typename T> class Box<T>;          // ERROR 
+template<typename T> void translate(T*);    // OK: primary template 
+template<typename T> void translate<T>(T*); // ERROR 
+\end{verbatim}
+
+Nonprimary class template occur when declaring so-called partial specializations.
+\end{document}
