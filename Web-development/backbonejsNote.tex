@@ -1,6 +1,8 @@
 \documentclass[a4paper, 11pt]{book}
 \usepackage{parskip}
+\usepackage{fontspec}
 \usepackage[top=1.8cm, bottom=2.5cm, left=1.5cm, right=1.5cm]{geometry}
+\setmainfont{DejaVu Serif}
 \title{Backbone JS Application}
 
 \begin{document}
@@ -317,7 +319,7 @@ functions which can be evaluated for rendering.
 Next, set the html of the \verb|el| DOM element to the output of processing a
 JSON version of the model associated with the view through the compiled
 template.
-\subsectioin{The events attribute}
+\subsection{The events attribute}
 The Backbone \verb|events| attribute allows us to \emph{attach event listeners}
 to either custom selectors, or directly to el if no selector is provided. 
 
@@ -406,7 +408,7 @@ It uses jQuery or Zepto's ajax implementations to make the RESTful request.
 
 In the above example, if we wanted to log an event when \verb|synce()| was
 called:
-\begin{veratim}
+\begin{verbatim}
 Backbone.sync = function(method, model) {
   console("I've been passed " + method + "with" + JSON.stringify(model));
 };
