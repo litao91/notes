@@ -2,3 +2,5 @@
 *.swp
 *.pdf
 *.aux
+*.dvi
+*.tar.gz
