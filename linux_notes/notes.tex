@@ -1,0 +1,1032 @@
+\documentclass[a4paper,10pt]{book}
+\usepackage{parskip}
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\topmargin -1.5cm
+\oddsidemargin -0.04cm
+\evensidemargin -0.04cm
+\textwidth 16.59cm
+\textheight 25cm
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\begin{document}
+\chapter{Introduction}
+Unix-like operating system agree on some common stands like IEEE's Portable
+Operating System based on Unix(POSIX) and X/Open's Common Application
+Environment(CAE).
+
+Current standards only specifiy an application programming interface, that is a
+well defined environment in which user programs should run.
+\begin{itemize}
+\item \textbf{Monolithic kernel} It is a program composed of several logially
+different components.
+\item Compiled and statically linked traditional Unix kernels: Able to
+automatically load and unload modules on demand.
+\item \textbf{Kernel Threading} Linux uses kernel threads in a very limited way
+to execute a few kernel funcions periodically
+\item \textbf{Multithreaded application support}
+\item \textbf{Preemptive kernel} When compiled with the "Preemptible Kernel"
+option, Linux 2.6 can arbitrarily interleave execution flows while they are in
+privileged mode.
+\item \textbf{Multiprocessor support}
+\item \textbf{filesystem} Porting a foreign filesystem to linux is generally
+easier than porting to other kernels.
+\item \textbf{STREAMS}
+\end{itemize}
+\section{Hardware Dependency}
+Linux tries to maintain a neat distinction between hardware-dependent and
+hardware-independent source code. 
+
+To that end, both the \emph{arch} and the \emph{include} directories include 23
+subdirectories that correspond to the different types of hardware platforms
+supported.
+
+\begin{itemize}
+\item alpha HP Alpha workstations
+\item arm.arm26 ARM processor-based computers
+\item cris Code Reduced Instruction Set CPUs used by Axis
+\item frv Embedded system based on FR-V Family.
+\item h8300 Hitachi
+\item i386 80x86
+\item ia64 Intel 64-bit
+\item m32r Renesas M32R
+\item m68k motorola
+\item mips
+\item and so on
+\end{itemize}
+
+\section{Basic Operating System Concepts}
+Two main objectives:
+\begin{itemize}
+\item Interact with the hardware components, servicing all low-level
+programmable elements included in the hardware platform.
+\item Provide an execution environment ot the applications that run on the
+computer system.(user programs)
+\end{itemize}
+
+Unix-like system hides all low-level details concerning the physical
+organization of the computer from applications run by the user.
+
+When a program wants to use a hardware resource, it must issue a request to the
+operating system. The kernel evaluates the request and, if it chooses to grant
+the resource, interacts with the proper hardware components on behalf of the
+user program.
+
+In particular, the hardware introduces different execution modes for the CPU: a
+nonprivileged mode for user programs and a privileged mode for the kernel. Unix
+calls these User Mode and Kernel Mode.
+
+Multiuser os:
+\begin{itemize}
+\item An authentication mechanism for verifying the user's dentity.
+\item A protection mechanism against buggy user programs that could block other
+application running in the the system.
+\item A protection mechanism against malicious user porgramms that could
+interfere with or spy on the activity of other users.
+\item An accounting mechanism that limits the amount of resource units assigned
+to each user.
+\end{itemize}
+\subsection{Processes}
+A process can be deined either as "an instance of a program in execution" or as
+the "execution context of a running program.
+
+A operating system component called the scheduler chooses the process that can
+progress. Processes of a multiuser system must be preemptable; the operating
+system tracks how long each process holds the CPU and periodically activates the
+scheduler.
+
+In particular, severl processes listen at the system terminals waiting fro user
+logins. For each user command, the shell process creates another process that
+executes the corresponding program.
+
+Each process has the illusion that it's the only process on the machine, and it
+has exclusive access to the operating system service.
+
+Whenever a process makes a system call, the privilege mode from User Mode to
+Kernel Mode, and the process starts the execution of a kernel procedure with a
+strictly limited purpose.
+
+Whenever the request is fully satisfied, the kernel procedure forces the
+hardware to return to User Mode.
+\subsection{Kernel Architecture}
+Monolithic: each kernel layer is integrated into the whole kernel program and
+runs in Kernel Mode on behalf of the current process.
+
+In contrast, microkernel OS demand a very small set of functions from the
+kernel, generally including a few synchronization primitives, a scheduler, and
+an interprocess communication mechanism.  Several system processes that run on
+top of the microkernel implement other OS-layer functions. like memory
+allocator, device drivers, and system call handlers.
+
+Linux kernel offers modules. A module is an object file whose code can be linked
+to (and unlinked from) the kernal at runtime.
+
+The module is executed in Kernel Mode on behalf of the current process.
+\section{Unix FS}
+\subsection{Hard and Soft Links}
+A filename included in a directory is called a file hard link, or a link. The
+same file may have several links included in the same directory or different
+ones.
+
+The command \verb|$ ln p1 p2| create a new hard link that has the pathname p2
+for the file identified by the pathname p1.
+
+Symbolic links are short files that contain an arbitrary pathname of another
+file. 
+
+\subsubsection{File Types}
+\begin{itemize}
+\item Regular file
+\item Directory
+\item Symbolic link
+\item Block-oriented device file
+\item Character-oriented device file
+\item Pipe and named pipe (FIFO)
+\item socket
+\end{itemize}
+\subsubsection{File Descriptor and Inode}
+Unix makes a clear distinction between the \emph{content} of the file and the
+\emph{information} about the file.
+
+Each file consist of a sequence of bytes, NO control information.
+
+All info included in an inode. Each file has its own inode, which the FS uses to
+identify the file.
+
+Inode should have the following attributes:
+\begin{itemize}
+\item File type
+\item Number of hard links associated with this file.
+\item File length in bytes
+\item Device ID
+\item Inode number that identifier of the device containing the file.
+\item UID
+\item GID
+\item timestamps
+\item Access rights and file mode.
+\end{itemize}
+\subsubsection{File controling system calls}
+\subsubsection{Opening a file}
+\textbf{Opening} \verb|fd = open(path, flag, mode)|
+
+The sys call creates an "open file" object and returns a file descriptor. A open
+file object contains:
+\begin{itemize}
+\item File-handling data structure. \verb|offset| filed that denotes the current
+position.
+\item Some pointer to kernel functions that the process can invoke. Depends of
+\verb|flags|
+\end{itemize}
+Generall properties:
+\begin{itemize}
+\item A file descriptor represents an interaction between a process and an
+opened file.
+\item Several processes may concurrently open the same file. The FS assigns a
+separate file descriptor to each file.
+\end{itemize}
+To create:\verb|create|, handled by kernel like \verb|open()|
+\subsubsection{Accessing an opened file}
+Kernel stores the file pointer in the open file object.
+
+Sequential access is implicitly assumed: the \verb|read()| and \verb|write()|
+system calles always refer to the position of current file pointer.
+
+To modify the value, a program must explicitly invoke the \verb|lseek()| sys
+call:
+\begin{verbatim}
+newoffset = lseek(fd, offset, whence);
+\end{verbatim}
+\begin{itemize}
+\item \verb|fd| the file descriptor of the opened file
+\item \verb|offset| A signed number to compute the new position.
+\item \verb|whence| Whether the new position should be computed by adding the
+\verb|offset| value to the number 0, the current pointer or the position of the
+last byte.
+THe \verb|read()|system call:
+\begin{verbatim}
+nread = read (fd, buf, count);
+\end{verbatim}
+\end{itemize}
+
+To close a file:\verb|res = close(fd);|
+
+\chapter{Standard I/O Library}
+\section{Streams and FILE Objects}
+With the stdio, the discussion centers around streams. When we open or create a
+file with the standard I/O library, we say that we have associated a sream with
+the file.
+
+A streams's orientation determines whether the charachters that are read and
+written are single-byte or multibyte. 
+
+Two functions can change the orientation once set. The \verb|freopen| function
+and the \verb|fwide|
+
+\begin{verbatim}
+#include <stdio.h>
+#include <wchar.h>
+
+int fwide(FILE *fp, int mode);
+\end{verbatim}
+
+\textbf{Returns:} \emph{Positive} if it is wide-oriented, \emph{negative} if it is byte
+oriented, or \emph{zero} if error.
+
+The \verb|fwide| function: performs:
+\begin{itemize}
+\item If the mode is \emph{negative}: \verb|fwide| will try to make the stream
+byte-oriented.
+\item if the mode is \emph{positive}: \verb|fwide| will try to make it
+wide-oriented.
+\item if the mode is \emph{zero}: \verb|fwide| will not try to set the
+orientation.
+\end{itemize}
+
+\textbf{Note:} \verb|fwide| will NOT change the orientation of a stream that is
+already oriented.
+
+When open a stream, the stdio function normally returns a pointer to a FILE
+object. It's normally a structure that contains:
+\begin{itemize}
+\item File descriptor
+\item Pointer to the buffer.
+\item The size of the buffer.
+\item A count of the number of characters currently in the buffer. 
+\end{itemize}
+
+\section{Standard Input, Standard Output and Standard Error}
+Three streams are predefined and automatically avaliable to a process:
+\begin{itemize}
+\item Standard input,
+\item Standard output, and 
+\item Standard error.
+\end{itemize}
+These streams refer to the same files as the file descriptors: STDIN\_FILENO,
+STDOUT\_FILENO, STDERR\_FILENO.
+
+These three standard I/O Streams are referenced through the tree predefined (in
+\verb|<stdio.h>| file
+pointers: \verb|stdin|, \verb|stdout|, and \verb|stderr|. 
+
+\section{Buffering}
+The goal of buffering is to use minimum number of \verb|read| and \verb|write|
+function calls. Also it tries to do its buffering automatically for each I/O
+stream.
+
+Three types of buffering are provided:
+\begin{enumerate}
+\item \textbf{Fully Buffered:} Actual I/O takes place when the standard I/O
+buffer is filled. Files residing on disk is normally fully buffered by the
+standard I/O library. The buffer is usually obtained by one of the STDIO
+functions calling \verb|malloc| the first time I/O is performed on a stream.
+
+The term \textbf{flush} describes the writing of STDIO buffer. A buffer can be
+flushed automatically or we can call the function \verb|fflush|. 
+\item \textbf{Line buffered:} The STDIO library performs I/O when a newline
+character is encontered on input or output. Typically used on streams when it
+refers to a terminal. 
+
+\item \textbf{Unbuffered:} The STDIO library does not buffer the characters. The
+standard error stream is normally unbuffered. 
+\end{enumerate}
+ISO C requires:
+\begin{itemize}
+\item stdin and stdout are fully buffered if an donly if they do not refer to an
+interactive device
+\item stderr is never fully buffered
+\end{itemize}
+If we don't like these defaults for any given stream, we can change it by
+calling: 
+\begin{verbatim}
+#include <stdio.h>
+
+void setbuf(FILE *restrict fp, char* restrict buf);
+void setvbuf(FILE *restrict fp, 
+             char* restrict buf, 
+             int mode,
+             size_t size);
+\end{verbatim}
+\textbf{Returns:} 0 if OK, nonzero on error
+The \emph{mode}:\_IOFBF (fully buffered), \_IOLBF (line buffered), \_IONBF
+(unbuffered)
+
+\section{Opening a Stream}
+\begin{verbatim}
+#include <stdio.h>
+FILE *fopen(const char *restrict pathname,
+            const char *restrict type);
+FILE *freopen(const char *restrict pathname,
+              const char *restrict type,
+              FILE *restrict fp);
+FILE *fdopen(int filedes, const char *type);
+\end{verbatim}
+\textbf{Returns:} File descriptor if OK, NULL on error.
+
+The differences:
+\begin{enumerate}
+\item \verb|fopen| function opens a specified file.
+\item \verb|freopen| opens a specified file on a specific stream, closing the
+stream first if it is already open. This functions is typically used to open a
+specified file as one of the predefined streams: stdin, stdout, stderr.
+\item \verb|fdopen| function takes an existing file descriptor. This function is
+often used with descriptors that are returned by the functions that create pipes
+and network communication channels. Because these special types of files cnanot
+be opened with the STDIO \verb|fopen| function, we have to call the
+device-specfic function to get the descriptor, and then associate with the stdio
+stream using \verb|fdopen|.
+\end{enumerate}
+
+The \emph{type} argument:
+\begin{tabbing}
+r or rb \hspace{3cm}\= open for reading\\
+w or wb \> truncate o 0 lenth or create for writing\\
+a or ab \> append: open for writing at the end of the file\\
+r+ ro r+b or rb+ \> open for reading and writing\\
+w+ or w+b or wb+ \> truncate to 0 lenth or create for reading and writing\\
+a+ or a+b or ab+ \> open or create for reading and writing at end of file
+\end{tabbing}
+An open stream is closed by calling \verb|fclose|
+\begin{verbatim}
+#include <stdio.h>
+int fclose(FILE* fp);
+\end{verbatim}
+Any buffered output data is flushed before the file is closed. Any input data
+that may be buffered is discarded. If the stdio library had automatically
+allocated a buffer for the stream, that buffer is released.
+\section{Reading and Writing a Stream}
+Once we open a stream, we can choose from among three types of unformateted I/O:
+\begin{enumerate}
+\item Character-at-a-time I/O. We can read or write one character at a time,
+with the starndard I/O functions handling all the buffering, if the stream is
+buffered.
+\item Line-at-a-time I/O. If we want to read or write a line at a time, we use
+\verb|fgets| and \verb|fputs|, each line is termined with a newline character,
+and we have to specify the maximum line length that we can handle when we call
+fgets.
+\item Direct I/O. This type of I/O is supported by the \verb|fread| and
+\verb|fwrite| functions. 
+\end{enumerate}
+
+\subsection{Input funcitons}
+Three functions allow us to read one character at a time:
+\begin{verbatim}
+#incldue <stdio.h>
+int getc(FILE *fp);
+int fgetc(FILE *fp);
+int getchar(void);
+\end{verbatim}
+\verb|getchar| is equivent to \verb|getc(stdin)|. The difference between the
+first two functions is that \verb|getc| can be implemented a as a macro, whereas
+\verb|fgetc| cannot be implemented as a macro. Three things:
+\begin{enumerate}
+\item The argument to \verb|getc| should not be an expression with side effect
+\item Since \verb|fgetc| is guaranteed to be an function, we can take its
+address.
+\item Calls to \verb|fgetc| probably take longer tan calls to \verb|getc|.
+\end{enumerate}
+These three functions return the next character as an unsigned char converted to
+an \verb|int|. (\verb|EOF| is required to be an negative value, and is often -1)
+
+These functions return the same value whether an error occurs or the end of file
+is reached. To distinguish between the two, we must call either \verb|ferror| or
+\verb|feof|
+\begin{verbatim}
+#include <stdio.h>
+int ferror(FILE *fp);
+int feof(FILE *fp);
+\end{verbatim}
+Both return nonzero if the condition is true, 0 otherwise. 
+
+In most implementations, two flags are maintained for each stream in the FILE
+object:
+\begin{itemize}
+\item An error flag
+\item An eof flag
+\end{itemize}
+Both flags are cleared by \verb|clearerr|
+
+After reading from a stream, we can push back chars by calling \verb|ungetc|
+\begin{verbatim}
+#include <stdio.h>
+int ungetc(int c, FILE *fp);
+\end{verbatim}
+Pushback is often usedd when we're reading an input stream and braking the input
+into words or tokes of some form. Sometimes we need to peek at the next char to
+determine how to handle the current character. It's tehn easy to push back the
+char that we peeked at, for the next call to \verb|getc| to return.
+\subsection{Output Functions}
+\begin{verbatim}
+#include <stdio.h>
+int putc(int c, FILE *fp);
+int fputc(int c, FILE *fp);
+int putchar(int c);
+\end{verbatim}
+\section{Line-at-a-Time I/O}
+\begin{verbatim}
+#include <stdio.h>
+cahr *fgets(char *restrict buf, int n, FILE *restrict fp);
+char *gets(char *buf);
+\end{verbatim}
+Return: buf if OK, NULL on eof or error
+
+Both speficy the address of the buffer to read the line into. The \verb|gets|
+function reads from standard input, wehreas \verb|fgets| reads from the
+specified stream.
+
+With \verb|fgets|, we have to specify the size of the buffer, n. This function
+reads up through and including the \textbf{next newline}.
+
+The \verb|gets| function should never be used. The problem is that it doesn't
+allow the caller to specify the buffer size. If the line is longer than the
+buffer, it will write over whatever happens to follow the buffer in memory.
+
+Line-at-a-time output is provided by \verb|fputs| and \verb|puts|
+\begin{verbatim}
+#include <stdio.h>
+int fputs(const char *restrict str, FILE *restrict fp);
+int puts(const char *str);
+\end{verbatim}
+Both return non-negative value if OK, EOF on error
+
+\verb|fputs| writes the null-terminated string to hte specified stream. The null
+byte at the end is not written. Not that this need not be line-at-a-time output,
+since the string need not contain a newline as the last non-null character.
+
+The \verb|puts| function writes the null-terminated string to the stdout, then
+writes a newline character to the stdout.
+\section{Binary I/O}
+If we're doing binary I/O, we often would like to read or write an entire
+structure at a time. The following two funcitons are provided for binary I/O:
+\begin{verbatim}
+#include <stdio.h>
+size_t fread(void *restrict ptr, 
+             size_t size,
+             size_t nobj,
+             FILE *restrict fp);
+size_t fwrite(const void *restrict ptr, 
+              size_t size, 
+              size_t nobj,
+              FILE *restrict fp);
+\end{verbatim}
+Both return: number of objects read or write
+
+Two common uses:
+\begin{itemize}
+\item Read or write a birnary array.
+\item Read or write a structure.
+\end{itemize}
+
+A fundamental problem with binary I/O is that it can be used to read only data
+that has been written on the same system. 
+\section{Positioning a Stream}
+Three ways to position a standard I/O stream:
+\begin{enumerate}
+\item The two functions \verb|ftell| and \verb|fseek|. They assume that
+file's position can be stored in a long integer
+\item The two functions \verb|ftello| and \verb|fseeko|. They replace the long
+integer with the \verb|off_t| data type
+\item The two functions \verb|fgetpos| and \verb|fsetpos|. They use an abstract
+data type, \verb|fpos_t|, that record a file's position. Defined in ISO C.
+\end{enumerate}
+
+\begin{verbatim}
+#incldue <iostream>
+long ftell(FILE *fp); //Returns current file pos if OK, 1L on error
+int fseek(FILE *fp, long offset, int whence); //0 if Ok, nonzeror on error
+void rewind(FILE *fp);
+\end{verbatim}
+The value for whence are the same as for the \verb|lseek| function.
+
+\begin{verbatim}
+#include <stdio.h>
+
+off_t ftello(FILE *fp); 
+//Returns: current file position indicator if OK, (off_t)1 on error
+
+int fseeko(FILE *fp, off_t offset, int whence); 
+//Returns 0 if OK and nonzero on error.
+\end{verbatim}
+
+\begin{verbatim}
+#include <stdio.h>
+int fgetpos(FILE *restrict fp, fpos_t *restrict pos);
+int fsetpos(FILE *fp, const fpos_t *pos);
+\end{verbatim}
+Both return: 0 if OK, nonzero on error
+\section{Formatted I/O}
+\subsection{Formattted Output}
+Handled by the four \verb|printf| functions:
+\begin{verbatim}
+#include <stdio.h>
+int printf(const char *restrict format, ...);
+int fprintf(FILE *restrict fp, const char *restrict format, ...);
+//Both return: number of char of output if OK, negative if output error
+
+int sprintf(char *restrict buf, const char *restrict format, ...);
+int snprintf(char *restrict buf, size_t n, const char *restrict format, ...);
+Both return: number of chars stores in array if OK, negative value if encoding
+error.
+\end{verbatim}
+The \verb|printf| writes to the stdout, \verb|fprintf| writes to the specified
+stream, \verb|sprintf| places the formatted characters in the array buf. The
+\verb|sprintf| function automatically appends a null byte at the end.
+
+Note that it's possible for \verb|sprintf| to overflow the buffer pointed to by
+buf. To slove the buffer-overflow problems, the \verb|snprintf| is introduced.
+
+\subsection{Formatted Input}
+Formatted input is handled by the three \verb|scanf| functions
+\begin{verbatim}
+#include <stdio.h>
+int scanf(const char *restrict format, ...);
+int fscanf(FILE *restrict fp, const char *restrict format, ...);
+int sscanf(const char *restrict buf, const char *restrict format, ...);
+//All three return: number of input items assigned, 
+//EOF if input error or end of file before any conversion
+\end{verbatim}
+The \verb|scanf| family is used to parse an input stream and convert character
+sequence into variables of specified types.
+
+\section{Implementation Details}
+The standard I/O library ends up calling the I/O routines. Each stdio stream has
+an associated file descriptor, and we can obtain it by calling \verb|fileno|
+\begin{verbatim}
+nclude <stdio.h>
+int fileno(FILE *fp);
+Returns: the file descriptor associated with the stream
+\end{verbatim}
+
+To look at the implementation of the standard I/O library on your system, start
+with the header \verb|<stdio.h>|. This will show how the \verb|FILE| object is
+defined.
+
+\section{Temporary Files}
+Two functions to assist in creating temporary files:
+\begin{verbatim}
+#include <stdio.h>
+char *tmpnam(char *ptr); //Return pointer to unique path name
+FILE *tmpfile(void); //Returns file pointer if OK, NULL on error
+\end{verbatim}
+The \verb|tmpnam| function generates a string that is a valid pathname and that is that
+is not the same name as an existing fiel. This function genreates a different
+pathname each time it is called. 
+
+The \verb|tmpfile| function creates a temporary binary file that is
+automatically removed when it is closed or on program termination.
+
+The standard technique often used by \verb|tmpfile| function is to create a
+unique pathname by calling \verb|tmpnam|, then create the file, and immediately
+\verb|unlink| it. Recall that unlinking a file does not delete its contents
+until the file is closed.
+
+Single UNIX specification defines two additional functions:
+\begin{verbatim}
+#incldue <stdio.h>
+char* tempnam(const char* directory, const char *prefix);
+//Returns pointer to unique pathname
+#include <stdlib.h>
+int mkstemp(char *template);
+//Return file descriptor if OK, 1 on error
+\end{verbatim}
+
+The temporary file created by \verb|mkstemp| is not removed automatically for
+us. If we want to remove it from the FS, we need to unlink it ourselves.
+\chapter{System Data Files and Information}
+\section{Password File}
+The UNIX System's password file, called the user database by POSIX.1, contains
+fields about user. These fields are contained in a \verb|passwd| structure that
+is defined in \verb|<pwd.h>|.
+
+Historically, the password file has been stored in \verb|/etc/passwd| and has
+been an ASCII file. Each line contains the fields separated by colons. 
+
+Several points about these entries:
+\begin{itemize}
+\item there is usually a root, has a uid of 0
+\item The encrypted password filed contains single chars as a
+placeholderencrypted passowrds are now kept elsewhere.
+\item Some fields in a password file entry can be empty. 
+\item The shell field contains the name of the executable program to be used as
+the login shell for the user.
+\item There are several alternatives to using \verb|/dev/null/| to prevent a
+particular user from logging in to a system. like \verb|/bin/false| or
+\verb|/bin/true| to disable an account.
+\item the \verb|nobody| user name can be used to allow people to log in to a
+system, but with a UID 65534 and GID 65534 that provide no privileges.
+\item Some systems that provide the \verb|finger| command support additional
+information in the comment field.
+
+POSIX.1 defines two functions to fetch entries from the password file:
+\begin{verbatim}
+#include <pwd.h>
+struct passwd *getpwuid(uid_t uid);
+struct passwd *getpwnam(const char *name); 
+//Both return pointer if OK, NULL on error
+\end{verbatim}
+The \verb|getpwuid| function is used by the \verb|ls| program to map the
+numverical user ID. 
+
+The following function go through the entire password file:
+\begin{verbatim}
+#include <pwd.h>
+struct passwd *getpwent(void);
+//Returns pointer if OK, NULL on error
+void setpwent(void);
+void endpwent(void);
+\end{verbatim}
+\end{itemize}
+\section{Shadow Passwords}
+The encrypted password is a copy of the user's password that has been put
+through a one-way encryption algorithm. 
+
+Given an encrypted password, we can't applay an algorithm that inverts it and
+returns the plaintext password. But we could guess a password, run it through
+the one-way algorithm, and compare the result to the encrypted password. A
+common experiment is for someone to obtain a copy of the password file and try
+guessing the passwords.
+
+To make it more difficult to obtain the raw materials (the encrypted passwords),
+systems now store the encrypted password in another file, often called the
+\emph{shadow password} file. Minimally, this file has contian the user name and
+the encrypted password. 
+
+The only two mandatory fields are the user's login name and hte encrypted
+passowrd. The other fields control how often the password is to changeknown as
+"password aging" and how long an account is allowed to remain active.
+
+The shadow password file should not be readable by the world. Only a few
+programs need to access encrypted passwords \verb|login| and \verb|passwd|, for
+exampleand these programs are often set-uer-ID root. With shadow passwords, the
+regular password file, \verb|/etc/passwd|, can be left readable by the world.
+
+A separate set of functions is avaliable to access the shadow password file:
+\begin{verbatim}
+#include <shadow.h>
+struct spwd *getspnam(const char* name);
+struct spwd *getspent(void);
+//Retun pointer if OK, NULL on error
+void setspent(void);
+void endspent(vodi);
+\end{verbatim}
+
+\section{Group file}
+We can look up either a group name or a numerical group ID with the following
+two functions:
+\begin{verbatim}
+#include <grp.h>
+struct group *getgrgid(gid_t gid);
+struct group *getgrnam(const char *name);
+//Both return: pointer if OK, NULL on error
+\end{verbatim}
+As with the password file functions, both of these functions normally return
+pointers to a static varialbe, which is overwritten on each call.
+
+Search the entire group file:
+\begin{verbatim}
+#include <grp.h>
+struct group *getgrent(void);
+void setgrent(void);
+void endgrent(void);
+\end{verbatim}
+\chapter{Process Environment}
+\section{Introduction}
+Examine the environment of single process.
+\begin{itemize}
+\item How main function is called when the program is executed.
+\item How command-line arguments are passed to the new program
+\item what the typical memory layout looks like
+\item how to allocate additional memory.
+\item how the process can use environment variables
+\item various ways for the process to terminate.
+\end{itemize}
+\section{main Function}
+When a C program is executed by the kernel by one of the \verb|exec| functions,
+which is a special start-up routine is called before the main function is
+called. The executable program file specifies this routine as the starting
+address for the program; this is set up by the link editor when it is invoked by
+the C compiler.
+
+This start up routine takes values from the kernel, the command-line arguments
+and the environment and sets things up so that the main function is called.
+\section{Process Termination}
+THere are eight way for a process to terminate . Normal termination occurs in
+five ways:
+\begin{enumerate}
+\item Return from \verb|main|
+\item Calling \verb|exit|
+\item Calling \verb|_exit| or \verb|_Exit|
+\item Return of the last thread from its start routine
+\item Calling \verb|pthread_exit| from the last thread
+\end{enumerate}
+Abnormal termination occurs in three ways:
+\begin{enumerate}
+\item calling abort
+\item Receipt of a signal
+\item Response of the last thread to a cancellation request.
+\end{enumerate}
+The start-up routine that we mentioned in the previous section is also written
+so that \textbf{if the main function returns, the exit function is
+called.}. If the start up were written in C(oftne in assembler), the call to
+main should look like this:\verb|exit(main(argc, argv));|
+\subsection{Exit Function}
+Three functions terminate a program normally:\verb|_exit| and \verb|_Exit|,
+which return to the kernel immeidately, and \verb|exit|, which performs certain
+cleanup processing and then returns to the kernel
+\begin{verbatim}
+#incldue <stdlib.h>
+void exit(int status);
+void _Exit(int status);
+#include <unistd.h>
+void _exit(int status);
+\end{verbatim}
+The reason for the different headers is that \verb|exit| and \verb|_Exit| are
+specified by ISO C, whereas \verb|_exit| is specified by the POSIX.1.
+
+Historically, the \verb|exit| function has always performed a clean shutdown of
+STDIO library:the \verb|fclose| function for all open streams.
+
+All three exit functions expect a single integer argument, which we call the
+\emph{exit status}. Most UNIX System shells provide a way to examine the exit
+status of a process. If:
+\begin{itemize}
+\item Any of these fnctions is called without an exit status
+\item main does a return without a return value.
+\item the main function is not declared to return an integer.
+\end{itemize}
+The exit status of the process is undefined. However, if the return type of
+\verb|main| is an integer and \verb|main| falls off the end (an implicit
+return), the exit status of the process is 0;
+
+Note:\verb|exit(0);| is the same as \verb|return(0);| from main
+\subsection{atexit Function}
+With ISO C, a process can register up to 32 functions that are automatically
+called by \verb|exit|.
+
+These are called \emph{exit handlers} and are registered by calling
+\verb|atexit| function:
+\begin{verbatim}
+#include <stdlib.h>
+int atexit(void (*func)(void));
+//return 0 if OK nonzero on error
+\end{verbatim}
+The \verb|exit| function calls these functions in reverse order order of their
+registration.
+
+Note that the only way a program is executed by the kernel is when one of the
+\verb|exec| functions is called. The only way a process voluntarily terminates
+is when \verb|_exit| or \verb|_Exit| is called. A process can also be
+involunatarily terminated by a signal.
+\section{Environment List}
+Each program is also passed an \emph{environment list}. Like the argument list,
+the environment list is an array of character pointers, with each pointer
+containing the address of a null-terminated C string; The address of the array
+of pointers is contained in the global variable \verb|environ|
+\begin{verbatim}
+extern char **environ;
+\end{verbatim}
+We'll call the \verb|environ| the environment pointer, the array of pointers to
+the environment list. By convention, the environment consists of
+\verb|name=value| strings.
+\section{Memory Layout of a C program}
+A C program has been composed of the following pieces:
+\begin{itemize}
+\item Text segment, the machin instructions that the CPU executes. Usually, the
+text segment is shareable so that only a sinlge copy needs to be in memory.
+Also, the text segment is often read-only.
+\item Intialized data segment(or simply data segment), contianing varialbes that
+are spefifically initialized in the program.
+\item Uninitialized data segment, often called the "bss" segment, named after an
+ancient assembler operator that stood for "block initialized by the kernel to
+arithmetic 0 or null pointers before teh program starts executing.
+\item Stack, where automaitic variable are stored, along with information that
+is saved each time a function is called. Each time a function is called, the
+address of where to return to and certain information about the caller's
+environment, such as some of the machine registers, are saved on the stack. 
+\item Heap, where dynamic memory allocation usually takes place. Historically,
+the heap has been located between the uninitialized data and the stack.
+\end{itemize}
+The size command reports the sizes(in bytes) of the text, data, and bss
+segments.
+\section{Shared Libraries}
+Shared libraries remove the comman library routines from the executable file,
+instead maintaining a sinlge copy of the library routine somewhere in memory
+that all processes reference. This reduce the size of the exe-file but may add
+some runtime overhead, either when the program is first executed or the first
+time each shared library function is called.
+
+Anohter advantages of shared libraries is that library functions can be replaced
+with new versions without having to relink edit every program that uses the
+library. 
+\section{Memory Allocation}
+ISO C specifies three functions for memory allocation:
+\begin{enumerate}
+\item \verb|malloc|, allocates a specified number of bytes of memory.
+\item \verb|calloc|, allocates space for a specified number of ojbects of a
+specified size. 
+\item \verb|realloc| increases or decreases the size of previously allocated
+area.
+\end{enumerate}
+\begin{verbatim}
+#include <stdlib.h>
+void *malloc(size_t size);
+void *calloc(size_t nobj, size_t size);
+void *realloc(void *ptr, size_t newsize);
+//return non-null pointer if OK, nll on error
+void free(void *ptr);
+\end{verbatim}
+The pointer returned by the three allocation functions is guaranteed to be
+suitable aligned so that it can be used for any data object.
+
+The function \verb|free| causes the space pointed to by \emph{ptr} to be
+deallocated.
+
+The allocation routines are usually implemented with the \verb|sbrk| system
+call. This system call expands (or contracts) the heap of the process.
+
+Although \verb|sbrk| can expand or contract the memory of the process, most
+versions of \verb|malloc| and \verb|free| never decrease their memory size. The
+space that we free is avaliable for a later allocation, but the freed space is
+not usually returned to the kernel; that space is kept in the \verb|malloc|
+pool.
+
+It is important to realize that most implementations allocate a little more
+space than is requested and use the additional space for record the size of the
+allocated block, a pointer to the next allocated block, and the like. This means
+that writing past the end of allocated area could overwrite this record-keeping
+information in a later block. These types of errors are often catastrophic, but
+difficult to find. Also, it is possible to overwrite this record keeping by
+writing before the start of the allocated area.
+
+Other possible errors that can be fatal are freeing a block that was aready
+freed and calling \verb|free| with a pointer that was not obtained from the
+\verb|alloc| functions. 
+
+\section{Environment Variables}
+The environment strings are usually the form \verb|name=value|
+
+The UNIX kernel never looks at these strings; their interpretation is up to
+various applications. 
+
+ISO C defines function that we can use to fetch values from the environment:
+\begin{verbatim}
+#include <stdlib.h>
+char *getenv(const char *name);
+//Return: pointer to the value associated with the name, NULL if not found
+\end{verbatim}
+We may want to change the value of an existing varialbe or ada new variable to
+the environment. (Can affect the environment of only the current process and any
+child process that we invoke. We cannot affect the environment of the parent
+process, which is often a shell.)
+
+Not all system support this capability:
+\begin{verbatim}
+#incldue <stdlib.h>
+int putenv(char *str);
+int setenv(const char *name, const char *value, int rewrite);
+int unsetenv(const char* name);
+//All return 0 if OK, nonzero on error
+\end{verbatim}
+\begin{itemize}
+\item The \verb|putenv| function takes a string of name=value and places it in the
+environment list. If name already exists, its old definition is first removed.
+\item The \verb|setenv| function sets \verb|name| to \verb|value|, if rewrite is
+nonzero, teh existing definition for name is first removed; if rewrite is
+zero, nothing is changed.
+\item The \verb|unsetenv| function removes any definitions of name
+\section{setjmp and longjmp Functions}
+\end{itemize}
+In C, we can't \verb|goto| a label that's in another function. Instead, we must
+use the \verb|setjmp| and \verb|longjmp| functions to perform this type of
+branching. These two functions are useful for handling error conditions that
+occur in a deeply nested function call.
+
+We're branching back through the call frames to a function that is in the call
+path of the current function:
+\begin{verbatim}
+#incldue <setjmp.h>
+int setjmp(jmp_buf env);
+\\Returns: 0 if called directly, nonzero if returning from a call to longjmp
+void longjmp(jmp_buf env, int val);
+\end{verbatim}
+We call setjmp from the loaction that we want to return to.
+
+The argument \verb|env| is of the special type \verb|jum_buf|. This data type is
+some form os array that is capable of holding all the information requireda to
+restore the status of the stack to the state when we call \verb|longjmp|.
+Normally, the env variable is a global variable, since we'll need to reference
+it from another function.
+\subsection{Automatic, Register, and Volatile Variables}
+Most implementations do not try to roll back these automatic variables and
+register variables, but the standards say only that their values are
+indeterminate. If you have an antomatic variable that you don't want rolled
+back, define it with the \verb|volatile| attribute.
+\section{getrlimit and setrlimit}
+Every process has a set of resource limits, some of which can be queried and
+changed by the \verb|getrlimit| and \verb|setrlimit| functions.
+\begin{verbatim}
+#include <sys/resource.h>
+int getrlimit(int resource, struct rlimit *rlptr);
+int setrlimit(int resource, const struct rlimit *rlptr);
+//Both return: 0 if OK, nonzero on error
+\end{verbatim}
+The resource limits for a process are normally establisheb by process 0 when
+the system is initialized and then inherited by each successive process.
+
+Each call to these two functions specifies a single resource and pointer to the
+following structure:
+\begin{verbatim}
+struct rlimit{
+  rlim_t rlim_cur /*soft limit: current limit */
+  rlim_t rlim_max; /*hard limit: maximum value for rlim_cur */
+}
+\end{verbatim}
+Three rules:
+\begin{enumerate}
+\item A process can change its soft limit to a value less than or equal to its
+hard limit
+\item A process can lower its hard limit to a value greater than or equal to its
+soft limit.
+\item Only a superuser process can raise a hard limit
+\end{enumerate}
+An infinite limit is specified by the constant \verb|RLIM_INFINITY|
+\chapter{Process Control}
+\section{Process Identifiers}
+Every process has a unique process ID, a nonnegative integer. The PID is often
+used as piece of other identifiers, to guarantee uinqueness.
+
+Although unique, process IDs are reused. As processes terminate, their IDs
+become candidates for reuse. Most UNIX systems implement algorithm to delay
+reuse.
+
+There are some special process, but the details differ from implementation to
+implementation. 
+
+PID 0 is usually the scheduler process and is often known as the
+swapper. No program on disk corresponds to this process, which is part of the
+kernel and is known as a system process. 
+
+PID 1 is usually the \verb|init| process and is invoked by the kernel at the end
+of the bootstrap procedure. In \verb|/etc/init| in older versions of UNIX and
+\verb|/sbin/init| in newer versions. This process is responsible for bringing up
+a UNIX system after the kernel has been bootstrapped. \verb|init| usually reads
+the system-dependent initialization files, \verb|/etc/rc*| files or
+\verb|/etc/inittab| and the files in \verb|/etc/init.d| and brings the system to
+a certain state, such as multiuser.
+
+The \verb|init| process never dies. It is a normal user process, not a system
+process within the kernel, like the swapper, although it does run with superuser
+privileges.
+
+Each UNIX system implementation has its own set of kernel process that provide
+operating system service. 
+
+The following functions return these identifiers:
+\begin{verbatim}
+#include<unistd.h>
+pid_t getpid(void);
+//Returns: process ID of calling process
+pid_t getppid(void);
+//Returns: parent process ID of calling process
+uid_t getuid(void);
+//Returns: real user ID of calling process
+uid_t geteuid(void);
+//Returns: effective user ID of calling process. 
+gid_t getgid(void);
+//Returns: real group ID of calling process
+gid_t getegid(void);
+//Returns: effective group ID of calling process.
+\end{verbatim}
+\section{fork Function}
+An existing process can create a new one by calling the fork function
+\begin{verbatim}
+#include <unistd.h>
+pid_t fork(void);
+//Returns 0 in child, process ID of child in parent, 1 on error
+\end{verbatim}
+The new process created by \verb|fork| is called the child process.  
+This function is called once but returns twice. 
+
+The reason the child's process ID is returned to the parent is that a process
+can have more than one child, and there is no function that aloows a process to
+obtain the process IDs of its children.
+
+The reason fork returns 0 to the child is that a process can have only a single
+parent, and the child can always call the \verb|getppid| to obtain.
+
+Both the child and the parent continue executing with the instruction that
+follows the call to fork. The child is a copy of the partent. For example, the
+child gets a copy of the parent's data space, heap and stack Note that this is a
+copy for the child; the parent and the child do not share these portions of
+memory. 
+
+Current implementation don't perform a complete copy of the parent's data, stack
+and heap, since a fork is often followed bya an exec. Instead, a technique
+called \emph{call-on-write} is used. These regions are shared by the parent and
+the child and have their protection changed by the kernel to read-only. If
+either process tries to modify these regions, the kernel then makes a copy of
+that piece of memory only.
+\end{document}

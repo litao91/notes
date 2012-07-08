@@ -72,7 +72,7 @@ are
 \end{description}
 
  \chapter{Better Navigation}
- Context aware navigation:
+ \section{Context aware navigation:}
  \begin{itemize}
  \item \verb|{| Go to gthe beginning of the paragraph, or in the empthy line
   just above it, \verb|}| end of the paragraph
@@ -84,20 +84,24 @@ are
  \item \verb|w| Move to the beginning of the next word.
  \item \verb|b| Move to the beginning of the previous word.
  \item \verb|e| Move to the end of the world.
+ \item \verb|ge| Backward to the end of word.
  \item \verb|%| Go to the other side of the block.
- \item \verb|[[| and \verb|][| Move backwards/ forward to the next section
- beginning(for example, start of a function);
- \item \verb|[]| and \verb|]]| Move backwards/forward to the next section end.
+ \item \verb|(|/\verb|)| sentences backward/forward.
+ \item \verb|{|/\verb|}| paragraphs backward/forward
+ \item \verb|]]| sections forward or to the next '{' in the first column.
+ \item \verb|][| section forward or to the next '}' in the first column.
+ \item \verb|[[| sections backward or to the previous '{' in the first column
+ \item \verb|[]| sections backward or to the previous '}' in the first column
  \item \verb|[{|Move to the beginning of the block, \verb|]}| move to the end of
  the blcok
  \item \verb|[/| Move to the beginning of the comment block, and \verb|]\| for
  the end.
- \item \verb|gd| go to declaraction , start search from current line. The 
- \verb|gD| start from line one. 
+ \item \verb|gd| go to declaration , start search from current line. The
+ \verb|gD| start from line one.
  \item \verb|Ctrl+]| to follow the link
  \end{itemize}
 
- Fater navigation in multiple buffers:
+ Faster navigation in multiple buffers:
  For every file you open, you have a Vim buffer.
  \begin{itemize}
  \item \verb|:buffers| Bring up the list of buffers and find the right buffer in
@@ -107,14 +111,15 @@ are
  \item Go cycle through: \verb|bnext| \verb|bprevious|
  \item Open referenced files faster: \verb|gf|
  \end{itemize}
- \chapter{Search and you will find}
+
+ \section{Search and you will find}
  Search In current file:
  \begin{itemize}
  \item \verb|?someWord| the command searches backwards in the file for the first
  word after the question mark.
  \item \verb|/someWord| Search forward.
  \item \verb|g#| and \verb|g*| Now vim not just jumps to the next occurrence of
- the word, but also to anyoccurrences where the world is part of another word.
+ the word, but also to any occurrences where the world is part of another word.
  \end{itemize}
  Search in multiple files:
  \begin{itemize}
@@ -130,11 +135,158 @@ are
  \item \verb|:helpgrep pattern [@LANG]| search in the help.
  \item \verb|:helptags /path/to/documentation| for new Vim plugin.
  \end{itemize}
- X marks the spot(Adding visible and hidden markers).
- \begin{itemize}
- \item \verb|:sign define name arguments|
- \end{itemize}
- \chapter{spf13-vim and plugins}
+
+ \section{Adding marks}
+ \subsection{Sign, Visible Mark}
+ Defining a sign (visible mark): \verb|:sign define {name} {arguments}|, visible
+ markers arguments are the signs you want to have, can be linehl, text, texthl 
+ or icon. Example could be:
+ \begin{verbatim}
+ :sign define information text="> linehl=Warning texthl=Error icon=/path
+ \end{verbatim}
+ Now we have defined sign and have added it to our vimrc file, and we are ready
+ to place the sign somewhere:a
+ \begin{verbatim}
+:exe ":sign place 123 line=".line(".")."name=information file=".expand("%:p")
+\end{verbatim}
+Replace the number 123 with any number you will use as ID for this sign.
+
+What it does is add the sign named information under the ID 123 to the current
+line (line(.)) in the current open file (expand("\%:p")).
+
+Remove the sign: \verb|sign unplace ID|
+
+Remove it only from current file:\verb|sign unplace ID file=name|
+
+See \verb|:help sign| for detail
+
+\subsection{Marks, Hidden Marks}
+Simply press the m key in the normal mode followed by one character, for example
+\verb|ma| will mark the current line with a. If you
+later want to jump to this line, then you simple press \verb|'a|, to jump to
+this place instead, simply press \verb|`a|
+
+Note that 0=9 are marks set from \verb|.viminfo| and normally only used by Vim
+itself.
+
+You can always get a complete list of your marks by: \verb|:marks|
+
+Delete marks: \verb|:delmarks markid markid...markid|, delete all with
+\verb|:delmarks!|
+\chapter{Production Boosters}
+\section{Template}
+Create a directory in our VIMHOME called templates/ and place a file with the
+template code (HTML code for example) and save it as \verb|html.tpl|, to get it
+loaded to all-new HTML files:
+\verb|:autocmd BufNewFile *.html Or $VIMHOME/templates/html.tpl|
+
+Looks for a template that matches the extension of the file:
+\begin{verbatim}
+:autocmd BufNewFile * silent! Or $VIMHOME/templates/%:e.tpl|
+\end{verbatim}
+We can add place holder in the templates with \verb|< +KEYWORD+ >|
+
+\section{Snippets with snipMate}
+If you want to create a snippet for the for loop:
+\begin{verbatim}
+snippet for
+for(${1:i} = 0; $1 <${2:count}; $1${3:++}) {
+    ${4:/*code*/}
+}
+\end{verbatim}
+This text is added to a file placed in \verb|$VIMHOME/snippets| called
+\verb|FILETYPE.snippet|
+
+The first line say that a new snippet is started and that it should be executed
+when the for word is written and the Tab key is pressed.
+
+The next line is where the real magic goes. It actually starts by writing
+writing a snippet of code look like this:
+\begin{verbatim}
+for(int i=0; i < count; i++) {
+    /*code*/
+}
+\end{verbatim}
+
+However, after the snippet is inserted, it places the cursor in the first i and
+goes to into the insert mode. That way you can goes into the insert mode. After
+i, you press the Tab key and the cursor will jump to count and again to into the
+insert mode. Press Tab again moves to ++ and lastly to the /*code*/ and you can
+modify the code.
+
+The snipMate system works by looking for \verb|{NUMBER:INITIAL_VALUE}|. The
+NUMBER indicates the sequence in which you will jump to it. If you need the same
+value in several places, simply use \verb|$NUMBER|
+
+\section{Using tag list}
+\verb|ctags *.c *.h| to generate and \verb|:set tags=/path/to/tags|.
+
+Now Vim knows about the tags. \verb|Ctrl-]| If there is only one match, you are
+moved directly to where the function is defined. Or a list of matches if
+multiple matches. \verb|Ctrl-t| to where you originally came from
+
+\verb|:tags| to see the stack, and \verb|Ctrl-]| and \verb|Ctrl-t| to move up
+and down in the stack. Select by \verb|:tselect|(list of matching) and
+\verb|:ptselect|(list of preview window).
+
+\verb|:tnext| and \verb|:tprev| to move to next and previous tag.
+\section{Auto-Complete}
+\subsection{Autocompletion with known words}
+\verb|Ctrl-n| will look up forward of the file. \verb|Ctrl-p| look up backward.
+
+To add dictionary:
+\begin{verbatim}
+:set dictionary+=/path/to/dictionary/file/with/words
+\end{verbatim}
+\verb|Ctrl-x| to get into a completion mode and by pressing \verb|Ctrl+k| to do
+a lookup for keyword.
+\section{Omnicompletion}
+It gave the user the possibility to define exactly how the functionality of the
+completion should work:
+\begin{verbatim}
+:set omnifunc=MyCompleteFunction|
+\end{verbatim}
+Typing in some letters and then going to completion mode by \verb|Ctrl-x|
+followed by \verb|Ctrl-o|.
+\section{Using macro recording}
+\begin{itemize}
+    \item \verb|qa| Record from now in into register a;
+    \item \verb|q| end the recording.
+    \item \verb|@a| executes the recording in register a.
+    \item \verb|@@| repeats the last executed command.
+\end{itemize}
+
+\section{Using sessions}
+Stored information can be split into three categories:
+\begin{description}
+\item [View] A view can be saved and restored such that a window will have the
+same look and setup every time you use the view.
+\item [Sessions] Collections of views and information about how they are
+interoperating.
+\item [All the rest] All the global settings that do not directly apply to any
+window in View.
+\end{description}
+\subsection{Simple session usage}
+Save the currently running session
+\begin{verbatim}
+:mksession FILE
+\end{verbatim}
+Or save the current view:
+\begin{verbatim}
+:mkview FILE
+\end{verbatim}
+Vim uses a file called Session.vim that puts in the current work directory by
+default.
+
+Set the path of session files:\verb|:set viewdir=$HOME/.vim/views|
+
+Load a session:\verb|vim -S Session.vim| or with command:
+\verb|source Session.vim|, and with view: \verb|:loadview View.vim|
+
+
+
+
+\chapter{spf13-vim and plugins}
  \section{Plug-ins}
  \subsection{NERDTree}
  \begin{itemize}

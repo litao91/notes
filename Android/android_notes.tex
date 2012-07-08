@@ -52,7 +52,7 @@ in the diagram below:
         ServiceProvider and a ServiceUser. This kernel component is provide by
         Android.
     \item \verb|ServiceProvider|: Provides some kind of service. It \textbf{parses the
-        received RPC data} from the BinderDriver and \textbf{And does the real
+        received RPC data} from the BinderDriver and \textbf{does the real
         work}.
     \item \verb|ServiceManager|: This is a special singleton ServiceProvider
         that \textbf{provides service manager services} for other service providers.
@@ -62,7 +62,39 @@ in the diagram below:
         ServiceUser as part of their application.
 
 \end{itemize}
-The typical flow of events for fictitious MultServiceProvider
+The typical flow of events for fictitious MultServiceProvider(a service provider
+that multiplies two number for a client.) and a MultServiceUser client which
+doesn't know how to multiplication and needs to use the MulServiceProvider.
+\begin{enumerate}
+    \item ServiceManager Runs first and registers a special node with the 
+        BinderDriver;
+    \item The MultiServiceProvider gets an IServiceManager proxy object for the special node 0 by calling the global 
+        \verb|defaultServiceManager()|function 
+    \item The MultServiceProvider then calls
+        \verb|defaultServiceManager()->addService("Multiplier", new MultServiceProvider())|
+        to add itself as a serviceprovider and then
+        waits in an infinite loop for someone to request its services. The
+        addService RPC call is routed to the ServiceManager through 
+        BinderDriver.
+    \item The BinderDriver notices that the RPC to the ServiceManger it
+    generates another service, so besides routing the RPC to the ServiceManager
+    it generates another node (let's call it node M), for the new
+    MultServiceProvider.
+    \item The MultServiceUser client process gets a IServerManager proxy object
+    for the special node O. (again by using defultServiceManger).
+    \item The client dose an IServiceManager::getService("Multiplier")RPC call
+    to get the MultServiceProvider. This call is routed to the ServiceManager
+    through the BinderDriver.
+    \item The ServiceManager reads the RPC data from the BinderDriver, processes
+    the IServiceManager::getService requestand returns back the node
+    representing the MultServiceProvider.
+    \item MultServiceUser calls MultServiceProvider::multiply(a,b). This call is
+    routed to MultServiceProvider by the BinderDriver.
+    \item The MultServiceProvider handles the MultServiceProvider::multiply RPC
+    call and sends the product of 2 number in a reply to BinderDriver.
+    \item The BinderDriver routes the reply back to the client.
+    \item The client reads the data from BinderDriver contains the product.
+\end{enumerate}
 
 
 \begin{figure}
