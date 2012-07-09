@@ -66,12 +66,14 @@ The typical flow of events for fictitious MultServiceProvider(a service provider
 that multiplies two number for a client.) and a MultServiceUser client which
 doesn't know how to multiplication and needs to use the MulServiceProvider.
 \begin{enumerate}
-    \item ServiceManager Runs first and registers a special node with the 
+    \item ServiceManager Runs first and registers a special node(Node O) with the 
         BinderDriver;
     \item The MultiServiceProvider gets an IServiceManager proxy object for the special node 0 by calling the global 
         \verb|defaultServiceManager()|function 
     \item The MultServiceProvider then calls
-        \verb|defaultServiceManager()->addService("Multiplier", new MultServiceProvider())|
+        \begin{verbatim}
+        defaultServiceManager()->addService("Multiplier", new MultServiceProvider())
+        \end{verbatim}
         to add itself as a serviceprovider and then
         waits in an infinite loop for someone to request its services. The
         addService RPC call is routed to the ServiceManager through 
@@ -80,6 +82,8 @@ doesn't know how to multiplication and needs to use the MulServiceProvider.
     generates another service, so besides routing the RPC to the ServiceManager
     it generates another node (let's call it node M), for the new
     MultServiceProvider.
+    \item The ServiceManager reads the data from the BinderDriver and processes
+        the \verb|IServiceManager::addService| RPC call.
     \item The MultServiceUser client process gets a IServerManager proxy object
     for the special node O. (again by using defultServiceManger).
     \item The client dose an IServiceManager::getService("Multiplier")RPC call
@@ -95,29 +99,337 @@ doesn't know how to multiplication and needs to use the MulServiceProvider.
     \item The BinderDriver routes the reply back to the client.
     \item The client reads the data from BinderDriver contains the product.
 \end{enumerate}
+\section{Using Android IPC binders from native code}
+When executed with an integer argument (ex: "binder 743"), the binary acts as a
+\textbf{client} that searches for the "Demo" service, binds to it, and exercises
+its API.
 
+The suggested way to run this demo to have 3 window open and issue the following
+commands in them:
+\begin{enumerate}
+    \item \verb|adb logcat -v time binder_demo:* *:S|
+    \item \verb|adb shell binder|
+    \item \verb|adb shell binder 456|
+\end{enumerate}
 
+We start by defining an interface (think AIDL) that will be \emph{shared between the
+service and client}:
+\begin{verbatim}
+class IDemo : public IInterface {
+    public:
+        enum {
+            ALERT = IBinder::FIRST_CALL_TRANSACTION,
+            PUSH,
+            ADD
+        };
+        // Sends a user-provided value to the service
+        virtual void        push(int32_t data)          = 0;
+        // Sends a fixed alert string to the service
+        virtual void        alert()                     = 0;
+        // Requests the service to perform an addition and return the result
+        virtual int32_t     add(int32_t v1, int32_t v2) = 0;
+ 
+        DECLARE_META_INTERFACE(Demo);
+};
+ 
+// This implementation macro would normally go in a cpp file
+IMPLEMENT_META_INTERFACE(Demo, "Demo");
+\end{verbatim}
+
+Next we define the \textbf{server end}, which is made up of 2 classes:BnDemo,
+and its derived class, Demo.
+
+BnDemo extracts the argument from the data Parcel sent by the client, calls the
+appropriate virtual function(implemented in the Demo class) to do the
+heavy-lifting, and packs the returned values into the reply Parcel to be sent
+back to the client.
+\begin{verbatim}
+//Extract the data
+class BnDemo : public BnInterface<IDemo> {
+    virtual status_t onTransact(uint32_t code, const Parcel& data,
+                                Parcel* reply, uint32_t flags = 0);
+};
+
+status_t BnDemo::onTransact(uint32_t code, const Parcel& data,
+                            Parcel* reply, uint32_t flags) {
+
+    data.checkInterface(this);
+
+    switch(code) {
+        case ALERT: {
+            alert();
+            return NO_ERROR;
+        } break;
+        case PUSH: {
+            int32_t inData = data.readInt32();
+            push(inData);
+            return NO_ERROR;
+        } break;
+        case ADD: {
+            int32_t inV1 = data.readInt32();
+            int32_t inV2 = data.readInt32();
+            int32_t sum = add(inV1, inV2);
+            reply->writeInt32(sum);
+            return NO_ERROR;
+        } break;
+        default:
+            return BBinder::onTransact(code, data, reply, flags);
+    }
+}
+\end{verbatim}
+
+This is the Demo class, which would normally do the real work on the service
+side of the binder:
+\begin{verbatim}
+class Demo : public BnDemo {
+    virtual void push(int32_t data) {
+        // Do something with the data the client pushed
+    }
+    virtual void alert() {
+        // Handle the alert
+    }
+    virtual int32_t add(int32_t v1, int32_t v2) {
+        return v1 + v2;
+    }
+};
+\end{verbatim}
+
+Now we define a service proxy, to be used on the client side. Notice again that
+any data the client needs to send to the service is packed in Parcel and results
+are also returned in a Parcel.
+
+\begin{verbatim}
+class BpDemo : public BpInterface<IDemo> {
+    public:
+        BpDemo(const sp<IBinder>& impl) : BpInterface<IDemo>(impl) { }
+
+        virtual void push(int32_t push_data) {
+            Parcel data, reply;
+            data.writeInterfaceToken(IDemo::getInterfaceDescriptor());
+            data.writeInt32(push_data);
+            remote()->transact(PUSH, data, &reply);
+        }
+
+        virtual void alert() {
+            Parcel data, reply;
+            data.writeInterfaceToken(IDemo::getInterfaceDescriptor());
+            remote()->transact(ALERT, data, &reply, IBinder::FLAG_ONEWAY);
+        }
+
+        virtual int32_t add(int32_t v1, int32_t v2) {
+            Parcel data, reply;
+            data.writeInterfaceToken(IDemo::getInterfaceDescriptor());
+            data.writeInt32(v1);
+            data.writeInt32(v2);
+            remote()->transact(ADD, data, &reply);
+
+            int32_t res;
+            status_t status = reply.readInt32(&res);
+            return res;
+        }
+};
+\end{verbatim}
+Finally, we start the service as follows:
+\begin{verbatim}
+defaultServiceManager()->addService(String16("Demo"), new Demo());
+android::ProcessState::self()->startThreadPool();
+\end{verbatim}
+
+And the client can now connect to the service and call some of the provided
+function:
+\begin{verbatim}
+sp<IServiceManager> sm = defaultServiceManager();
+sp<IBinder> binder = sm->getService(String16("Demo"));
+sp<IDemo> demo = interface_cast<IDemo>(binder);
+ 
+demo->alert();
+demo->push(65);
+int32_t sum = demo->add(453, 827);
+\end{verbatim}
+Note that Binder Server is basically an object of Binder class. When the object
+is created, it will start a new process internally listening to the Message from
+Binder Driver. When receiving message, it will receive the 
+\section{Implementation with Java android code}
+\subsection{Remote Methods and AIDL}
+Three steps to create and use remote methods in Android:
+\begin{enumerate}
+    \item Define the interface in AIDL
+    \item Implement the interface. That is write methods that match the
+        signatures in the interface and that perform the operations you want in
+        the program that provides the desired services.
+    \item Invoke the method where you want to use them.
+\end{enumerate}
+\subsection{Android Interface Definition Language}
+To communicate from one process to another, data store in memory has to be moved
+across process boundaries. That means the data has to be packaged for
+transport(Marshalled) and put into the right member variables after the data has
+been moved across the process boundary.(Unmarshalled)
+
+Usually, marshalling and unmarshelling data is performed the parameters in a
+remote method call, to let you pass data from one application to another and
+return results.
+
+Marshalling and unmarshelling data is tedious, so usually use an
+\textbf{interface} definition language that generates calls to marshalling
+methods. The syntax of the interface definition language \emph{resembles the
+main language in use}, so that a remote procedure call closely resembles a
+normal method call. 
+
+AIDL syntax is identical to Java interface definition syntax, except that in
+AIDL you can label the parameters for remote method calls as in, out or inout. 
+
+Parameter labeled in will be transferred to the remote method, out will be
+returned to the caller from the remote method. Example:
+\begin{verbatim}
+interface ISecondary {
+    /**
+     * Request the PID of this service, to do evil things with it.
+     */
+    int getPid();
+
+    /**
+     * This demonstrates the basic types that you can use as parameters
+     * and return values in AIDL.
+     */
+    void basicTypes(int anInt, long aLong, boolean aBoolean, float aFloat,
+            double aDouble, String aString);
+}
+\end{verbatim}
+
+The ADK for Eclipse automatically compiles AIDL to java, and the generated java
+code do a bunch of things.
+
+Now let's take a look at the \verb|android.os.IInterface| class, its a base type
+on which all the interfaces created by AIDL are built, so they can be referenced
+through references of the same type. \verb|ISecondary extends IInterface|
+
+Most of the code in ISecondary interface is part of the definion of an abstract
+class called \verb|Stub| class.
+
+The word "stub" was chosen to refer to this class because remote method systems work by creating a method on the client with the same name as the method that runs on the server. The client method is considered a "stub" because it doesn't actually carry out the operation requested; it just marshalls the data, sends it to the server, and unmarshalls the return value. We'll show some details later in this chapter.
+
+\subsubsection{Implementing the Stub interface}
+The first line extends the abstract class and make a new instance of it:
+\begin{verbatim}
+private final ISecondary.Stub mSecondaryBinder = new ISecondary.Stub() {
+    public int getPid() {
+        return Process.myPid();
+    }
+    public void basicTypes(int anInt, long aLong, boolean aBoolean,
+            float aFloat, double aDouble, String aString) {
+    }
+};
+\end{verbatim}
+This is all you need to do to turn a method in your application to a remote
+method. The rest of the work of invoking the method in the other application
+
+So, for a remote interface generated by AIDL, the code takes the abstract Stub class and implements the method code that will actually be used. But how does data from another process get to these methods? That is where the onTransact method comes in.
+
+The \verb|onTransact| method is called \emph{when data in a Parcel object is
+delivered to a remote interface in an Android program}. This method is generated
+by AIDL for each remote interface. In this case, it reads each argument to the
+method from Parcel object, makes the method call, and writes the result to
+another Parcel object used for the return value of remote method.
+\subsubsection{Getting an instance of the remote Proxy object}
+There is one more part to this story: how does a different application find out
+aobut the interface called ISecondary, and how does the caller of the remote
+method actually call these methodsd? 
+
+Answer: the asInterface method of Stub class, and the Proxy class nested within
+Stub.
+
+And that means that any application that wants to make a remote method call must
+share the interface definition with the application that implements the
+interface.
+
+In practice terms, that means that the calling application and the application
+that implements the remote interface have to be compiled with the same AIDL
+files.
+
+Now let's take a look at how the remote interface gets called. In the ApiDemo
+code we are using as an example here, this happens in the RemoteServiceBinding
+class, where the asInterface method is called:
+\begin{verbatim}
+mSecondaryService = ISecondary.Stub.asInterface(service);
+\end{verbatim}
+
+The parameter named service here is a reference to an IBinder interface. The Binder abstract class implements IBinder, and the Stub class (the guts of what AIDL has generated) extends Binder. Let's see how this parameter is used in the asInterface method:
+\begin{verbatim}
+public static com.example.android.apis.app.ISecondary asInterface(android.os.IBinder 
+  obj) {
+    if ((obj == null)) {
+        return null;
+    }
+    android.os.IInterface iin = (android.os.IInterface) 
+      obj.queryLocalInterface(DESCRIPTOR);
+    if (((iin != null) && (iin instanceof com.example.android.apis.app.ISecondary))) {
+        return ((com.example.android.apis.app.ISecondary) iin);
+    }
+    return new com.example.android.apis.app.ISecondary.Stub.Proxy(obj);
+}
+\end{verbatim}
+
+Here the parameter is named obj, and first it is tested to see whether it is null. Then, asInterface checks to see whether there is an instance of ISecondary with the correct name. What that means is that the "remote" interface we were looking for is actually in the same application as the code calling it. And that means no inter-process communication is necessary. Otherwise, if it isn't a local interface, an instance of the Proxy object is created. Remember that this code is executing in the context of the application that wants to call the remote interface.
+
+Looking inside the Proxy class, we see that it has methods that have the same signature as the remote methods defined in the AIDL file. Here, unlike in the abstract class Stub, the methods are implemented, and the implementations create Parcel objects and fill them with the "flattened" parameters in exactly the right order for the onTransact method to "unflatten" them and call the remote methods.
+
+That means an application calls a remote method by getting an instance of the Proxy class and calling the remote methods as if they were local. You can see this here, excerpted from the RemoteServiceBinding class:
+\begin{verbatim}
+int pid = mSecondaryService.getPid();
+\end{verbatim}
+
+Recall that mSecondaryService is returned from the ISecondary.Stub.asInterface method. Because the caller gets a Proxy object and the remote methods are implemented in a Stub object, and because both Proxy and Stub implement ISecondary, it all looks like a local method call, but the implementations of the methods are completely different in the calling application and the application that implements the remote methods.
+
+In summary:
+\begin{itemize}
+    \item You define remote interfaces in AIDL
+    \item AIDL turns your remote interface definition into a java
+        interface with \verb|Stub| and \verb|proxy| classes nested
+        inside.
+    \item Both the application that \emph{calls the remote method} and the
+        application that \emph{implements it} use the same AIDL file and the
+        same generated interface.
+\end{itemize}
+The application calling the remote interface gets an instance of the Proxy class
+that implements the very same interface it is defined inside of. They package up
+their parameters into a Parcel object and send them to the application that
+implements the remote methods and unpackages and returns the results.
+
+In the remote application, a concrete class extend Stub has implementations of
+the remote methods. The onTransact method "unflatten" data in a Parcel object,
+calls the remote methods and "flattens" the result.
+
+\subsubsection{Publishing an interface}
+The server publishes an interface to \emph{make it possible for other activities
+to find it} Publishing is accomplished by overriding the onBind method of
+Service class.
+
+The client calls the bindService method of the Context class, calling a call to
+the server's onBind method. The bindService an onBind methods are the
+"handshake" required to start using a remote interface in a specific Service
+object in a specific process running in the Android environment. 
 \begin{figure}
     \centering
     \includegraphics[scale=0.5]{AIDL.png}
     \caption{AIDL}
 \end{figure}
-\subsection{Use case: Who calls "onPause" in Activity}
-\begin{enumerate}
-    \item ActivityManager will Call "schedulePauseActivity" across process
-    \item The binder thread will queue the request, and send message by Handler.
-    \item The Main thread will call the "onPause" in the Looper.
-\end{enumerate}
-\begin{figure}
-    \centering
-    \includegraphics[scale=0.5]{onPauseCall.png}
-    \caption{Calling onPause}
-\end{figure}
+\subsubsection{Dive into the mechanism}
+The binder framework is actually works without a proxy. The basic the procedure
+is:
+\begin{itemize}
+    \item To define a Binder Server, we subclass the Binder class and
+        override the onTransact method.
+    \item At the creation of Binder Server, a new thread and a mRemote
+        object, which is also the subclass of Binder will be created.
+    \item mRemote override the transact method.
+    \item To actually call the remote method, the client get the mRemote object,
+        call transact, transact will pack the data and send to the Binder
+        Server. 
+    \item The server then calls the onTransact to retrieve the data in the
+        Parcel, and call the corresponding method.
+\end{itemize}
 
-
-
-
-
+The AIDL is actually used to hide the tedious Parcel packing and unpacking.
 
 \chapter{Classes and Methods}
 \section{Scroller}
@@ -766,4 +1078,16 @@ the \verb|EditorInfo| class, which is retrieved with
 When the user switches between input targets, you will receive calls to
 \verb|onFinishInput()| and \verb|onStartInput(EditorInfo, boolean)|. You can use
 these to reset and initialize your input state for the current target.
+\section{Implementation details}
+\subsection{The InputMethod interface}
+\begin{description}
+    \item [SERVICE_INTERFACE] Action it uses for its intent filter
+    \item [SERVICE_META_DATA] Name under which an input method service
+        component publishes information about itself. This meta-data must
+        reference an XML resource containing an \verb|<input-method| tag.
+    \item [attachToken(IBinder)]Called first and after an input method is
+        created, supplies an unique token for the session it has with the system
+        service.
+    \item [bindInput(InputBinding] Bind a new app environment.
+
 \end{document}
