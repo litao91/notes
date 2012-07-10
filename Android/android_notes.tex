@@ -308,7 +308,7 @@ class called \verb|Stub| class.
 
 The word "stub" was chosen to refer to this class because remote method systems work by creating a method on the client with the same name as the method that runs on the server. The client method is considered a "stub" because it doesn't actually carry out the operation requested; it just marshalls the data, sends it to the server, and unmarshalls the return value. We'll show some details later in this chapter.
 
-\subsubsection{Implementing the Stub interface}
+\subsection{Implementing the Stub interface}
 The first line extends the abstract class and make a new instance of it:
 \begin{verbatim}
 private final ISecondary.Stub mSecondaryBinder = new ISecondary.Stub() {
@@ -330,7 +330,7 @@ delivered to a remote interface in an Android program}. This method is generated
 by AIDL for each remote interface. In this case, it reads each argument to the
 method from Parcel object, makes the method call, and writes the result to
 another Parcel object used for the return value of remote method.
-\subsubsection{Getting an instance of the remote Proxy object}
+\subsection{Getting an instance of the remote Proxy object}
 There is one more part to this story: how does a different application find out
 aobut the interface called ISecondary, and how does the caller of the remote
 method actually call these methodsd? 
@@ -370,6 +370,9 @@ public static com.example.android.apis.app.ISecondary asInterface(android.os.IBi
 \end{verbatim}
 
 Here the parameter is named obj, and first it is tested to see whether it is null. Then, asInterface checks to see whether there is an instance of ISecondary with the correct name. What that means is that the "remote" interface we were looking for is actually in the same application as the code calling it. And that means no inter-process communication is necessary. Otherwise, if it isn't a local interface, an instance of the Proxy object is created. Remember that this code is executing in the context of the application that wants to call the remote interface.
+
+\verb|asInterface| make use of the \verb|querylocalinterface()| method, to
+provide a consistent interface for remote client and the local calling.
 
 Looking inside the Proxy class, we see that it has methods that have the same signature as the remote methods defined in the AIDL file. Here, unlike in the abstract class Stub, the methods are implemented, and the implementations create Parcel objects and fill them with the "flattened" parameters in exactly the right order for the onTransact method to "unflatten" them and call the remote methods.
 
@@ -413,7 +416,7 @@ object in a specific process running in the Android environment.
     \includegraphics[scale=0.5]{AIDL.png}
     \caption{AIDL}
 \end{figure}
-\subsubsection{Dive into the mechanism}
+\subsection{Dive into the mechanism}
 The binder framework is actually works without a proxy. The basic the procedure
 is:
 \begin{itemize}
@@ -430,6 +433,59 @@ is:
 \end{itemize}
 
 The AIDL is actually used to hide the tedious Parcel packing and unpacking.
+\section{Binder Objects in the System Service}
+We use \verb|getSystemService(String serviceName)| to get a system service, the
+implementation of this function is in the \verb|ContextImpl| class.
+\subsection{ServiceManager}
+ServiceManager is a isolated process, to manage the system services.
+
+ServiceManager itself is a Service. The Framework provide a system method
+allowing the access of the corresponding Binder reference of this Service. That
+is \verb|BinderInternal.getContextObject()|. This static method will return
+\verb|ServiceManager|. The advantage of this mechanism is that we should only
+expose one global Binder reference, and hide other System Services, which will
+enforce security checking and Services extension.
+
+At the start of other services, they will pass their Binder object to the
+ServiceManager for register (\verb|addService|).
+
+We can check \verb|ContextImpl.getSystemService()| for how to get the services.
+For example the \verb|INPUT_METHOD_SERVICE|
+\begin{verbatim}
+    }else if(INPUT_METHOD_SERVICE.equals(name)) {
+        return InputMethodManager.getInstance(this);
+\end{verbatim}
+The \verb|InputMethodManager.getInstance(this)|'s implementation:
+\begin{verbatim}
+sychronized(mInstanceSync) {
+    if(mInstance != null) {
+        return mInstance;
+    }
+    IBinder b = ServiceManager.getService(Context.INPUT_METHOD_SERVICE);
+    IInputMethodManager service= IInputMethodManager.Stub.asInterface(b);
+    mInstance = new InputMethodManager(service, mainLooper);
+}
+return mInstance;
+\end{verbatim}
+That is the system will get the \verb|Binder| object (containing the transact
+method) of InputMethod, and then use that object as parameter to
+\verb|IInputMethodManager.asInterface()| to get a consistent interface.
+
+Then \verb|ServiceManager.getService()| will first try to find the \verb|Binder|
+object in the \verb|sCache|, if no, then call the
+\verb|getIServiceManager().getService(name)|
+\section{Understanding Manager}
+All the Services managed by \verb|ServiceManager| are returned to the client
+through corresponding Manager. The managers will manage the APIs of the
+Services. Clients usually cannot access the service through Binder directly,
+instead, they should access them though a Manager. Managers are visible to the
+client, while the services are hidden.
+
+The Manager classes usually include Binder object. ServiceManager will get the
+remote Binder, and use this Binder to create a agent, then the client can use
+that agent to access remote methods.
+
+
 
 \chapter{Classes and Methods}
 \section{Scroller}
@@ -1078,16 +1134,17 @@ the \verb|EditorInfo| class, which is retrieved with
 When the user switches between input targets, you will receive calls to
 \verb|onFinishInput()| and \verb|onStartInput(EditorInfo, boolean)|. You can use
 these to reset and initialize your input state for the current target.
+
 \section{Implementation details}
 \subsection{The InputMethod interface}
 \begin{description}
-    \item [SERVICE_INTERFACE] Action it uses for its intent filter
-    \item [SERVICE_META_DATA] Name under which an input method service
+    \item[SERVICE\_INTERFACE] Action it uses for its intent filter
+    \item[SERVICE\_META\_DATA] Name under which an input method service
         component publishes information about itself. This meta-data must
         reference an XML resource containing an \verb|<input-method| tag.
-    \item [attachToken(IBinder)]Called first and after an input method is
+    \item[attachToken(IBinder)]Called first and after an input method is
         created, supplies an unique token for the session it has with the system
         service.
-    \item [bindInput(InputBinding] Bind a new app environment.
-
+    \item[bindInput(InputBinding] Bind a new app environment.
+\end{description}
 \end{document}
