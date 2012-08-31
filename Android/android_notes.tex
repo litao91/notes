@@ -1102,6 +1102,7 @@ view.
 \item If not running full screen, the application is moved or resided to be
 above these views;
 \end{itemize}
+
 \subsubsection{Soft Input View}
 Most implementations will simply have their own view doing all of this work, and
 return a new instance of it when \verb|onCreateInputView()| is called. As long
@@ -1141,10 +1142,156 @@ these to reset and initialize your input state for the current target.
     \item[SERVICE\_INTERFACE] Action it uses for its intent filter
     \item[SERVICE\_META\_DATA] Name under which an input method service
         component publishes information about itself. This meta-data must
-        reference an XML resource containing an \verb|<input-method| tag.
+        reference an XML resource containing an \verb|<input-method>| tag.
     \item[attachToken(IBinder)]Called first and after an input method is
         created, supplies an unique token for the session it has with the system
         service.
-    \item[bindInput(InputBinding] Bind a new app environment.
+    \item[bindInput(InputBinding)] Bind a new app environment.
 \end{description}
+
+\chapter{Showing things on lock screen}
+\section{What is Lock Activity?}
+In andorid 2.0, two window flags were added allowing activities to inherently
+interact with the lock screen:
+\begin{description}
+    \item[FLAG\_SHOW\_WHEN\_LOCKED] allows a window to get show above the keyguard. It
+    will only work with a non-translucent theme. It can only handle input from the
+    user when awake. When the window exits, the lockscreen immediately re-appears.
+    \item[FlAG\_DISMISS\_KEYGUARD] allows the window to get shown and cancel keyguard
+    completely. When the activity is closed, the user will then see their last task
+    in the stack instead of the lockscreen.If sleep occurs while activity is active,
+    it also prevents the Keyguard from occurring where it would normally govern that
+    sleep. This means any key will cause a wakeup.
+\end{description}
+
+\section{How do we make use of the Lock Activities}
+The implementation involves a \textbf{life-cycle mediated by a remote service
+handling phone and screen events}, which attempts to launch the Activity at
+screen off.
+
+Two startCommand callbacks will be sent back to the mediator via simple implicit
+intent broadcasts, allowing it to know when Lock Activity successfully started
+and when it successfully exit.
+
+The real trickiness comes from the fact that key event mediation is not as would
+expect with these lockscreen interaction flags. With show when locked, it seems
+we don't get any any events unless awake. With dismiss, we get everything and
+also have to deal with a wakeup from everything.
+
+The expected behavior for either would be the ability to handle key events
+first, then return false if we wanted to pass them on to the lockscreen for
+handling. It seems the case hasn't been considered.
+\chapter{Fragments}
+\section{Overview}
+A \verb|Fragment| represents a behavior or a portion of user interface in an
+\verb|Activity|. A fragment must always be embedded in an activity and the
+fragment's lifecycle is directly affected by the host activity's lifecycle.
+
+While an activity is running, you can manipulate each fragment independently,
+such as add or remove them.When you perform such a fragment transaction, you can
+also add it to back stack that's managed by the activity -- each back stack
+entry in the activity is a record of the fragment transaction that occurred. The
+back stack allows the user to reverse a fragment transaction, by pressing the
+Back button.
+
+When you add a fragment as a part of your activity layout, it lives in a
+\verb|ViewGroup| inside the activity's view hierarchy and the fragment defines
+its own view layout. You can insert a fragment into your activity layout by
+declaring the fragment in the activity's layout file, as \verb|<fragment>|
+element, or from your application code by adding it to an existing
+\verb|ViewGroup|. However, a fragment can also be a invisible worker.
+\paragraph{Creating a Fragment}
+To create a Fragment, you must create a subclass of \verb|Fragment|. The
+\verb|Fragment| class looks a lot like activity.
+\paragraph{Adding a user interface}
+A fragment is usually used as part of an activity's user interface and
+contributes its own layout to the activity.
+
+To provide a layout for a fragment, you must implement \verb|onCreateView()|
+\section{Adding a fragment to an activity}
+\subsection{Declare the fragment inside the activity's layout}
+In this case, you can specify layout properties for the fragment as if it were a
+view.
+
+The \verb|android:name| attribute in the \verb|<fragment>| specifies the
+\verb|Fragment| class to instantiate in the layout.
+
+When the system creates this activity layout, it instantiates each fragment
+specified in the layout and calls the \verb|onCreateView| method for each one,
+to retrieve each fragment's layout. The system inserts the \verb|View| returned
+by the fragment directly in place of the \verb|<fragment| element.
+
+Each fragment requires a unique identifier that the system can use to restore
+the fragment if the activity is restarted, and which you can use to capture the
+fragment to perform transaction, such as remove it. There are three ways to
+provide an ID for a fragment.
+
+Three ways to provide ID:
+\begin{itemize}
+    \item Supply \verb|android:id|
+    \item Supply \verb|android:tag| with a string.
+    \item System may uses the ID of he container view if you provide neither of the
+        previous two
+\end{itemize}
+\subsection{Programmatically add the fragment to an existing ViewGroup}
+At anytime while your activity is running, you can add fragments to your
+activity layout. You simply specify a \verb|ViewGroup| in which to place the
+fragment.
+
+To make transaction, you must use APIs from \verb|FragmentTransaction|, get it
+in Activity like this:
+\begin{verbatim}
+FragmentMananger fragmentManager = getFragmentManager();
+FragmentManager fragmentTransaction = fragmentManager.beginTransaction();
+\end{verbatim}
+You can add a fragment using \verb|add()| method, specifying the fragment to add
+and the view in which to insert it.
+\begin{verbatim}
+Example fragment = new ExampleFragment();
+fragmentTransaction.add(R.id.fragment_container, fragment);
+fragmentTransaction.commit();
+\end{verbatim}
+The first argument passed to \verb|add()| is the \verb|ViewGroup| in which the
+fragment should be placed, specified by the resource ID, and the second
+parameter is the fragment to add.
+
+\section{Managing Fragments}
+To manage the fragments in your activity, you need to use
+\verb|FragmentManager|. To get it call \verb|getFragmentManager()| from you
+activity.
+
+Things you can do:
+\begin{itemize}
+\item Get fragments with \verb|findFragmentById()| or \verb|findFragmentByTag()|
+\item Pop fragments off the back stack with \verb|popBackStack()|
+\item \verb|addOnBackStackChangedListener()|
+\end{itemize}
+\section{Performing Fragment Transaction}
+Performs APIs in \verb|FragmentTransaction| (\verb|add()|, \verb|remove()|,
+\verb|replace()|), and then apply it calling \verb|commit()|.
+
+Before you call \verb|commit()|, you might want to call \verb|addToBackStack()|
+in order to add the transaction to a back stack of fragment transaction. This
+back stack is managed by the activity and allows user to return the previous
+fragment.
+
+The order in which you add changes to a \verb|FragmentTransaction| doesn't
+matter, except:
+\begin{itemize}
+\item You must call \verb|commit()| last.
+\item If you're adding multiple fragments to the same container, then the order
+in which you add them determines the order they appear in the view hierarchy.
+\end{itemize}
+Apply transaction animation with \verb|setTransition()|.
+
+\verb|commit()| does not perform the transaction immediately. Rather, it
+schedules it to run on the activity's UIThread as soon as the thread is able to
+do so.
+\section{Creating Event callbacks to the activity}
+In some cases, you might need a fragment to share events with the activity. A
+good way to do that is to \emph{define a callback interface inside the fragment
+and require that the host activity implement it}. When the activity receives the
+callback through the interface, it can share the information with other
+fragments in the layout as necessary.
+
 \end{document}

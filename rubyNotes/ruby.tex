@@ -1,0 +1,1004 @@
+\documentclass[11pt, a4paper]{book}
+\usepackage{parskip}
+\usepackage[top=1.5cm, left=1cm, right=1cm, bottom=2.5cm]{geometry}
+\usepackage{fontspec}
+\usepackage{graphicx}
+\setmainfont{Roboto}
+\setmainfont{DejaVu Serif}
+
+\begin{document}
+\chapter{Overview}
+\section{Ruby is Object-Oriented}
+Every value is an object, even simple numeric literals and the values true,
+false and nil.
+
+Example:Invoke a method named class on these values, comments begins with
+\verb|#| in ruby, the \verb|=>| arrows in the comments indicated the value
+returned by the code:
+\begin{verbatim}
+1.class # => Fixnum: the number 1 is a fix num
+true.class # => TrueClass: true is the singleton instance of TrueClass
+\end{verbatim}
+In Ruby, parentheses are usually optional and they are commonly omitted.
+\section{Blocks and Iterators}
+\begin{verbatim}
+3.times{ print "Ruby!"} # Prints "Ruby!Ruby!Ruby"
+1.upto(9){|x| print x}  # Prints "123456789"
+\end{verbatim}
+Times and upto are methods implemented by integer objects. They are special kind
+of method known as iterator, and they behave like loops.
+
+The code within curly braces known as a block is associated with the method
+invocation and serves as the body of the loop.
+
+Arrays define an iterator named each:
+\begin{verbatim}
+a = [3, 2, 1]
+a.each do |elt| #each is an iterator. The block has a parameter elt.
+    print elt+1
+end #this block was delimited with do/end instead of {}
+\end{verbatim}
+
+Various other iterators are defined upon each:
+\begin{verbatim}
+a = [1, 2, 3, 4]
+b = a.map{|x| x*x} #square elements, b is [1, 4, 6, 9]
+c = a.inject do |sum, x| #compute the sum of elemetns
+    sum + x
+end
+\end{verbatim}
+Hashes are fundamental data structure in Ruby, they use square brackets.
+\begin{verbatim}
+h = {   # A hash that maps numbers to digits
+    :one => 1, # The "arrows" show mappings: key => value
+    :two => 2
+}
+h[:one]    # => 1. Access a value by key
+h[:three] = 3 # Add a new key/value pair to the hash.
+h.each do |key, value| #iterate through the key/value pairs
+    print #{value}:#{key};" #Note variables substitued into string
+end
+\end{verbatim}
+Keys can by any objects, buy Symbol objects are most commonly used.
+
+Symbols are \emph{immutable, interned strings}. They can be compared by
+identity rather than by textual content.
+
+The ability to \emph{associate a block of code with a method invocation} is
+fundamental. 
+
+Double-quoted strings can include arbitrary Ruby expressions delimited by
+\verb|#{\ and\ }|. The value of the expression within these delimiters is
+converted to string (by calling its \verb|to_s| method, which is supported to
+all objects.
+\section{Expressions and Operators in Ruby}
+Statements in other language are actually expressions in Ruby.
+\begin{verbatim}
+minimum = if x < y then x else y end
+2 ** 1024 # 2 to the power of 1024
+"Ruby" + "rocks!" # Stirng concatenation
+"Ruby!"*3 #String repetition
+"%d %s" % [3, "rubies"] # => "3 rubies": Py style, printf formatting
+\end{verbatim}
+\section{Methods}
+Methods are defined with \verb|def| keyword:
+\begin{verbatim}
+def square(x)
+    x*x
+end
+\end{verbatim}
+When a method is defined outside of a class or module, it is effectively a
+global function(Technically becomes a private method of the Object class.
+
+Methods can also be defined on individual objects by prefixing the name of the
+method with the object on which it is defined:
+\begin{verbatim}
+def Math.square()
+    x*x
+end
+\end{verbatim}
+\section{Assignment}
+Ruby supports parallel assignment:
+\begin{verbatim}
+x, y = 1, 2 # same as x =1; y=2
+a, b = b, a # swap the values
+x, y, z  = [1, 2, 3] #Array elements automatically assigned to variables.
+\end{verbatim}
+Methods in Ruby are allowed to return more than one value, and parallel
+assignment is helpful in conjunction with such methods:
+\begin{verbatim}
+def polar(x, y)
+    theta = Math.atan2(x,y) # compute the angle
+    r = Math.hypot(x,y) # compute the distance
+    [r, theta] # The last expression is the return value
+\end
+\end{verbatim}
+
+Methods whose names end with = can be invoked by assignment expressions:
+\begin{verbatim}
+o.x=(1)  #o has a method named x=
+o.x = 1  #x= method invoked by assignment expression
+\end{verbatim}
+
+End with a question mark: mark predicates that are return a Boolean value,
+Exclamation mark at the end of a method name is used to indicate hat caution is
+required with the use of the method. Usually the method without exclamation mark
+returns a modified copy of the object and the one with the exclamation mark is a
+mutator method that alters the object in place. 
+
+Global variables are prefixed with \verb|$|, instance variables are prefixed
+with \verb|@|, and class variables are prefixed with \verb|@@|
+
+\section{Regexp and Range}
+A Regexp object describes a texture pattern and has methods for determining
+whether a given string matches that pattern or not.
+
+A Range represents the values between two endpoints. Regular expressions and
+ranges have a literal syntax in ruby
+\begin{verbatim}
+/[Rr]uby/
+/\d{5}/  #Matches 5 onsecutive digits
+1..3     # All x where 1 <= x <=3
+1...3    # All x where 1<= x < 3
+\end{verbatim}
+Regexp and Range objects define the normal == operator for testing equality.
+They also define the === operator for testing matching and membership.
+
+\section{Classes and Modules}
+An object's state is held by its instance variables, which begin with \verb|@|
+and whose vales are specific to that particular object.
+\begin{verbatim}
+class Sequence
+    def initialize(from, to, by)
+        @from, @to, @by = from, to, by #Note parallel assignment and @ prefix
+    end
+
+    def each
+        x = @from
+        while x<= @to
+            yield x           # Pass x to the block associated with the iterator
+            x += @by
+        end
+    end
+
+    def length
+        return 0 if @from > @to #Note if used as a statement modifier
+        Integer((@to-@from)/@by) + 1
+    end
+    alias size length # size is now a synonym for length
+    #Override array-access operator to give random access to the sequence
+    def[](index)
+        return nil if index < 0
+        v = @from + index*@by
+        if v <= @to
+            v
+        else
+            nil
+        end
+    end
+    # Override arithmetic operators to return new Sequence objects
+    def *(factor)
+        Sequence.new(@from*factor, @to*factor, @by*factor)
+    end
+end
+\end{verbatim}
+Here is some code that uses this \verb|Sequence| class:
+\begin{verbatim}
+s = Sequence.new(1,10,2)
+s.each{ |x|print x}
+print s[s.size - 1]
+t = (s + 1) * 2
+\end{verbatim}
+If we just want to write the iterator, we can define it in a model of its own:
+\begin{verbatim}
+module Sequences                   # Begin a new module
+  def self.fromtoby(from, to, by)  # A singleton method of the module
+    x = from
+    while x <= to
+      yield x
+      x += by
+    end
+  end
+end
+\end{verbatim}
+
+Even the built-in core classes are open: any program can add method to them:
+\begin{verbatim}
+class Range                  # Open an existing class for additions
+  def by(step)               # Define an iterator named by
+    x = self.begin           # Start at one endpoint of the range
+    if exclude_end?          # For ... ranges that exclude the end
+      while x < self.end     # Test with the < operator
+        yield x
+        x += step
+      end
+    else                     # Otherwise, for .. ranges that include the end
+      while x <= self.end    # Test with <= operator
+        yield x
+        x += step
+      end
+    end
+  end                        # End of method definition
+end                          # End of class modification
+
+# Examples
+(0..10).by(2) {|x| print x}  # Prints "0246810"
+(0...10).by(2) {|x| print x} # Prints "02468"
+\end{verbatim}
+\section{Ruby Surprise}
+\begin{itemize}
+    \item Ruby's strings are mutable, \verb|[]=| allows you to alter the
+    characters of a string or to insert, \verb|<<| operators allows you to
+    append to a string, call the freeze method on a string to prevent any future
+    modifications.
+    \item nil is false, and any other is true
+
+\end{itemize}
+\section{Try Ruby}
+\verb|puts| print string with a newline, call \verb|to_s| is not string.
+\verb|print| does not append a newline. \verb|p| is a good alternative to
+\verb|puts|, it will converts objects to strings with the inspect method.
+\verb|irb|, interactive Ruby. \verb|ri| documentation viewer. ri followed by the
+name of a Ruby class, module, or method.
+\chapter{The structure and execution of Ruby}
+\section{Datatype and Objects}
+\subsection{Hash Literals}
+A hash literal is written as a comman-separated list of key/value pairs,
+enclosed within curly braces. Keys and values are separated with a two-character
+"arrow": \verb|=>|
+\begin{verbatim}
+numbers = { "one" => 11, "two" => 2, "three" => 3 }
+\end{verbatim}
+
+The \verb|Hash| class compares keys for equality with the \verb|eql?| method. If
+you define a new class that override the \verb|eql?| method, you must also
+override the \verb|hash| method. 
+
+If you define a class and do not override \verb|eql?|, then instances of that
+class are compared for object identity when used as hash keys. \emph{Two
+distinct instances of your class are distinct hash keys even if they represent
+the same content}. In this case, the default \verb|hash| method is appropriate:
+it returns the unique \verb|object_id| of the object.
+
+Note that mutable objects are problematic as hash keys. Changing the content of
+an object typically changes its hashcode. If you use an object as a key and then
+alter that object, the internal hash table becomes corrupted, and the hash no
+longer works correctly.
+
+\subsection{Ranges}
+A Range object represents the values between a start value and an end value.
+Range literals are written by placing two or three dots between the start and
+end value. If two dots are used, then the range is inclusive and the end value
+is part of the range. If three dots are used, then the range is exclusive and
+the end value is not part of the range.
+
+Test whether a value is included in a range with the \verb|include?| method.
+
+Implicit in the definition of a range is the notion of ordering. If a range is
+the values between two endpoints, there obviously must be some way to compare
+values to those endpoints. In ruby, this is done with the comparison operator
+\verb|<=>|, which \emph{compares its two operands and evaluates to -1, 0, or 1},
+depending on their relative order(or equality). Classes such as numbers and
+strings that have an ordering define the \verb|<=>| operator. A value can only
+be used as a range endpoint i it responds to this operator..
+
+Technically, any value that is compatible with the \verb|<=>| operators of the
+range endpoints can be considered a member of the range.
+
+The primary purpose for ranges is comparison: to be able to determine whether a
+value is in or out of the range.
+
+An important secondary purpose is iteration: if the class of the endpoints of
+the range defines a \verb|succ| method, then there is a discrete set of range
+members, and they can be iterate with \verb|each|, \verb|step|, and
+\verb|Enumerate|(\verb|to_a| to array) method.
+
+It is necessary to explain that range membership can be defined in two different
+ways.
+
+All the range endpoint values must implement the \verb|<=>| operator, so this definition
+of membership works for any Range object and does not require the endpoints to
+implement the \verb|succ| method. We'll call this \textbf{continuous membership
+test.}
+
+The second definition of membership is \textbf{discrete membership}, which does
+depend on \verb|succ|. It treats a \verb|Range| \verb|begin...end| as a set that
+include \verb|begin|, \verb|begin.succ|, \verb|begin.succ.succ|, and so on. By
+this definition, range membership is set membership, and the value x is included
+in the range only if it is a value returned by one of the \verb|succ|.
+
+In Ruby 1.9, \verb|cover?| always uses the continuous membership test.
+\verb|include?| and  \verb|member?| are  synonyms and they are use the
+continuous membership test for numbers. If the endpoint are not numeric, however they
+instead use the discrete membership test.
+
+\subsection{Symbols}
+A symbol literal is written by prefixing an identifier or string with a column:
+\verb|:symbol|, symbol also have a \verb|%s| literal syntax that allows
+arbitrary delimiters
+
+Symbols are \textbf{often used to refer to method names in reflective code}. For
+example: \verb|o.respond_to?:each|
+
+Another example, tests whether a give object responds to a specified method, and
+if so, invoke it:
+\begin{verbatim}
+name = :size
+if o.respond_to? name
+    o.send(name);
+}
+\end{verbatim}
+You can convert a string to a symbol by \verb|intern| or \verb|to_sym|, symbol
+to string with \verb|to_s|
+
+Two strings with the same content will \textbf{always convert to exactly the
+same Symbol object}.
+
+\subsection{True, False and Nil}
+When Ruby requires a Boolean value, nil behaves like false, and any value other
+than nil or false behaves like true.
+
+\subsection{Objects}
+Ruby is a very pure object-oriented language: all values are objects, and there
+is no distinction between primitive types and object type.
+
+All objects inherit from a class named Object and share the methods defined by
+that class.
+
+\subsubsection{Object Reference}
+When we work with object in Ruby, we are really working with object references.
+It is not the object itself we manipulate but a reference to it. When we assign
+a value to a variable, we are not copying an object into that variable; we are
+merely storing a reference to that variable.
+
+When you pass an object to a method in Ruby, it is an object reference that is
+passed to the method. It is not the object itself, and \emph{it is not a
+reference to the reference to the object}. So it's passed by value but rather
+than by reference, but that values passed are object references. So method can
+use those references to modify the underlying object.
+\subsubsection{Immediate values}
+Fixnum and Symbol objects are actually immediate values rather than references
+(they are immutable)
+
+\subsubsection{Object Identity}
+Every object has an object identifier, by \verb|object_id| method.\verb|__id__|
+is a synonym for \verb|object_id|
+
+\chapter{Statements and Control Structures}
+\section{Conditions}
+
+\subsection{if}
+\begin{verbatim}
+if <expression>
+    <code>
+end
+\end{verbatim}
+or
+\begin{verbatim}
+if <expression> then <code> end
+\end{verbatim}
+\begin{itemize}
+    \item Parentheses are not required around the conditional expression. The
+    new line, semicolon, or then keyword serves to delimit the expression
+    instead.
+    \item The end keyword is required
+\end{itemize}
+\subsection{else and elsif}
+\begin{verbatim}
+if <expression>
+    <code>
+else
+    <code>
+end
+\end{verbatim}
+
+and:
+\begin{verbatim}
+if <expression1>
+    <code1>
+elsif <expression2>
+    <code2>
+...
+elsif <expressionN>
+    <codeN>
+else
+    code
+end
+\end{verbatim}
+\subsection{Return value}
+The control structures that are commonly called statements. The return value of
+an if statement is the value of the last expression in the code that was
+executed, or nil if no block of code was executed or nil if no block of code was
+executed.
+\subsection{If As a Modifier}
+Instead of writing \verb|if <expression> then <code> end| we can simply write
+\verb|<code> if <expression>|, when in this form, if is known as a statement.
+Even though the condition is written last, it is evaluated first.
+
+\section{Loop}
+\subsection{while and until}
+\begin{verbatim}
+x = 10
+while x>= 0 do
+    puts x
+    x = x - 1
+end
+
+x = 0
+until x > 10 do
+    puts x
+    x = x + 1
+end
+\end{verbatim}
+The while loop evaluates its condition. If the value is anything other than
+false or nil, it executes its body, and then loops to evaluate its condition
+again.
+
+The until loop is the reverse. The condition is tested and the body is executed
+if the condition evaluates to false or nil.
+\subsection{While and until as modifiers}
+\begin{verbatim}
+x = 0
+puts x = x + 1 while x < 10
+
+x = 0
+whiel x < 0 do puts x = x + 1 end
+
+
+a = [1, 2, 3]
+puts a.pop until a.empty?
+\end{verbatim}
+
+Not that when while and until are used as modifiers, they must appear on the
+same line as the loop body that they modify. The loop condition is tested first,
+even though it is written after the loop body.
+
+There is a special-case exception to this rule. When the expression being
+evaluated is a compound expression delimited by begin and end keywords, then the
+body is executed first before the condition is tested:
+\begin{verbatim}
+x = 10
+begin
+    puts x
+    x = x - 1
+end until x == 0
+\end{verbatim}
+\subsection{The for/in loop}
+The for loop iterates through the elements of an enumerable object. On each
+iteration, it assigns an element to a specified loop variable and then executes
+the body of the loop:
+\begin{verbatim}
+for <var> in <collection> do
+    <body>
+end
+\end{verbatim}
+\verb|var| is a variable or comma-separated list of variables.
+\verb|collection| is any object that has an \verb|each| iterate method. The
+for/in loop calls the each method of the specified object. As that yields
+values, the for loop assigns each value to the specified variable and then
+executes the code in the body.
+\begin{verbatim}
+hash = {:a=>1, :b=>2, :c =>3}
+for key, value in hash
+    puts "#{key} => #{value}"
+end
+\end{verbatim}
+The loop variable or variables of a for loop are \emph{not local to the loop
+exists}. Similarly, new variables defined within the body of the loop continue
+to exist after the loop exits.
+
+For loop are much like iterators. The above is equivalent:
+\begin{verbatim}
+hash = {:a=>1, :b=>2, :c=>3}
+hash.each do |key, value|
+    puts "#{key} => #{value}"
+end
+\end{verbatim}
+The only difference between the for version of the loop and the eah version is
+that the block of code that follows an iterator does define a new variable
+scope.
+\section{Iterators and Enumerable Objects}
+Iterators example:
+\begin{verbatim}
+3.times(puts "haha"}
+data.each {|x| puts x}
+[1, 2, 3].map{|x| x*x }
+factorial = 1;
+2.upto(n) {|x| factorial *= x}
+\end{verbatim}
+
+The complex control structure behind this is \verb|yield|. The \verb|yield|
+statement temporarily returns control from the iterator method to the method
+that invoked the iterator.
+
+When the end of the block is reached, the iterator method regains control and
+execution resumes at the first statement following the yield.
+
+Vertical bars at the start of a block are like parentheses in a method
+definition. They hold a list of parameter names. The yield statement is like a
+method invocation; it is followed by zero or more expressions whose values are
+assigned to the block parameter.
+\subsection{Numeric Iterators}
+The Integer class defines three commonly used iterators:
+\begin{verbatim}
+4.upto(6) {|x| print x} # => pirnts "456"
+3.times {|x| print x}   # => pirnts "012"
+0.step(Math::PI, 0.1) { |x| puts Math.sin(x) }
+\end{verbatim}
+The last start form 0 and iterates in steps of 0.1 until it reaches Math::PI.
+\subsection{Enumerable object}
+\begin{verbatim}
+[1,2,3].each { |x| print x } # prints "123"
+(1..3).each { |print x}      # prints "123" same as 1.upto(3)
+
+File.open(filename) do |f|      # open named file, pass as f
+    f.each {|line| pirnt line } # print each line in f
+end
+
+squares = [1,2,3].collect {|x| x*x} # => [1,4,9]
+evens = (1...10).selects {|x| x%2 == 0} # => [2,4,6,8,10]
+odds = (1...10).reject {|x| x%2 == 0} # => [1,3,5,7,9]
+\end{verbatim}
+The inject method is more complicated. It invokes the associated block with two
+arguments. The first argument is accumulated value of some sort from previous
+iteration, the second argument is the next element of the enumerable object.The
+return value of the block becomes the first block argument for the next
+iteration. Or become the return value of the iterator after the last iteration.
+\begin{verbatim}
+data = [2,3,4,5]
+sum = data.inject{|sum, x| sum + x } #=> 14
+\end{verbatim}
+
+\subsection{Writing Custom Iterators}
+The defining feature of an iterator method is that it invokes a block of code
+associated with the method invocation. Do this with the yield statement.
+
+Invoking block twice:
+\begin{verbatim}
+def twice
+    yield
+    yield
+end
+\end{verbatim}
+To pass argument values to the block, follow the yield statement with a
+comma-separated list of expression.
+
+The following example expects a block. It generate n values of the form
+\verb|m*i + c| for i from 0 to n-1.
+\begin{verbatim}
+def sequence(n, m, c)
+    i = 0
+    while(i<n)
+        yield m*i + c  #invoke the block, and pass the vlaue to it
+    end
+end
+
+sequence(3, 5, 1) {|y| puts y}
+\end{verbatim}
+\subsection{Enumerators}
+Of class \verb|Enumerable::Enumerator|. Usually use ts \verb|to_enum|. With no
+arguments, \verb|to_enum| returns an enumerator whose each method simply calls
+the each method of the target object. Call method with an enumerator instead of
+a mutable array. This is a useful defensive strategy to avoid bugs.
+
+You can also pass arguments The first argument should be a symbol that
+identifies an iterator method.
+
+The each method of the resulting Enumerator will invoke the named method of the
+original object, any remaining arguments will be passed to that named method. 
+
+\chapter{Altering Control Flow}
+\section{Throw and Catch}
+throw and catch are Kernel methods that define a control structure that can be
+thought of as a multilevel break. Catch ca be in the calling method, or
+somewhere even further up the call stack.
+
+Ruby's catch method defines a labeled block of code, and Ruby's throw method
+causes that block to exit.
+
+Note that Ruby does exceptions differently, using raise and rescue. It is best
+to consider throw and catch as a general-purpose control structure rather than
+an exception mechanism. Example:
+\begin{verbatim}
+for matrix in data do
+    catch: missing_data do
+        for value in matrix do
+            for value in row do
+                throw:missing_data unless value
+            end
+        end
+    end
+end
+\end{verbatim}
+Note that the catch method takes a symbol argument and a block. It executes the
+block and returns when the block exits or when the specified symbol is thrown.
+
+If throw is never called, a catch invocation returns the value of the last
+expression in its block.
+
+If throw is called, then the return value of the corresponding catch is, by
+default, nil. You can specify an arbitrary return value for catch by passing a
+second argument to throw.
+
+The return value can help you distinguish normal completion of the block from
+abnormal completion with throw.
+
+\section{Exception Handling}
+Ruby uses Kernel method raise to raise exceptions, and use rescue clause to
+handle exceptions. Exceptions raised by raise are instances of the Exception
+class or one of its many subclass.
+
+\chapter{Method, Procs, Lambdas, and Closures}t
+Methods are defined with the \verb|def| keyword. This is followed by a method
+name and an optional list of parameter names in parentheses. The ruby code that
+consitutes the mehtod body follows the parameter list, and the end of the method
+is marked with the \verb|end| keyword. 
+
+Example:
+\begin{verbatim}
+# Define a factorial method with a single parameter n
+def factorial(n)
+    if n < 1
+        raise "argument must be > 0"
+    elsif n == 1
+        1
+    else
+        n *factorial(n-1)
+    end
+end
+\end{verbatim}
+\section{Method Return Value}
+Methods may terminate normally or abnormally.
+\begin{description}
+\item[Abnormal termination] Occurs when the method raises an eception.
+\item[Normal termination] The value of the method invocation expression is the
+value of the last expression is return.
+\end{description}
+
+The \verb|return| keyword is to force a return prior to the end of the method.
+If an expression follows the \verb|return| keyword, then the value of that
+expression is returned. If no expression follows, then the return value is
+\verb|nil|. Eg.
+\begin{verbatim}
+def facotrial(n)
+    raise "bad argument" if n < 1
+    return 1 if n == 1
+    n * factorial(n-1)
+end
+\end{verbatim}
+
+
+Ruby method may return more than one value. To do this, use an explicit
+\verb|return| statement and separate the values to be returned with commas:
+\begin{verbatim}
+#convert polar coordinates to Cartesian coordinates
+def cartesian(magnitude, angle)
+    [magnitude*Math.cos(angle), magnitude*Math.sin(angle) ]
+end
+\end{verbatim}
+Methods of this form are typically intended for use with parallel assignment.
+
+\subsection{Defining Singleton Method}
+If we place a \verb|def| statement inside a \verb|class|, then the methods that
+are defined are \emph{instance method of that method}, that is \textbf{these
+methods are defined on all objects that are instance of the class}.
+
+It is also possible to use \verb|def| to define a method on a \textbf{single specified
+object} Simple \emph{follow the def keyword with an expression that
+evaluates to an object}.
+
+This expression should be followed by a period and the name of the method to be
+defined:
+\begin{verbatim}
+o = "message"
+def o.printme
+    puts self
+end
+o.printme
+\end{verbatim}
+The resulting method is know as \emph{singleton method} because \textbf{it is
+available only on a single object}.
+
+\verb|Fixnum| and \verb|Symbol| cannot have singleton method because they are
+immediate values.
+
+Note:Methods may be undefined with the \verb|undef| statement.
+
+\section{Method Names}
+\begin{itemize}
+\item By convention, method names begin with a lowercase letter, and use
+underscore to separate it:\verb|like_this|
+\item End with equal sign to be a \emph{setter}
+\item Ends with question mark returns a value that answers the question posed by
+the method invocation. Methods like these are \textbf{predicates}
+\item Ends with an exclamation mark should be used with caution. Often they are
+\emph{mutators} that do not end with an exclamation mark.
+\end{itemize}
+
+
+\section{Operator Methods}
+Many of Ruby's operators, such as \verb|+,*,[]| are implemented with methods
+that you can  define in your own class.
+
+You define an operator by defining a method with the same "name" as the
+operator.(Only exception are the unary plus and minus with \verb|@+| and
+\verb|@-|
+
+eg:
+\begin{verbatim}
+def +(other)    #Define binary plus operator: x+y is x.+(y)
+    self.concatenate(other)
+end
+\end{verbatim}
+
+Methods that define a unary operator are passed no arguments. Methods that
+define binary operators are passed one argument and should operate on
+\verb|self| and the argument.
+
+The array access operator \verb|[]| and \verb|[]=| are special because they can
+be invoked with \emph{any number of arguments}. For \verb|[]=|, the last
+argument is always the value begin assigned.
+
+\section{Method arguments}
+\subsection{Hashes for named Arguments}
+Write a method that expects a hash as its argument or as one of its argments:
+\begin{verbatim}
+# Generate sequence of n numbers. For any index i, 0 <=i < 0, 
+# The value of element a[i] is m*i+c. Arguments n, m and c are
+# Passed as keys in a hash, so that it is not necessary to remember
+# their order
+def sequence(args)
+    # Extract the arguments from the hash.
+    # Note the || operator to specify defaults used.
+    # if the hash does not define a key that we are 
+    #interested in
+    n = args[:n] || 0
+    m = args[:m] || 1
+    c = args[:c] || 0
+
+    a = []
+    n.times {|i| a << m*i+c}
+    a
+end
+
+sequence({:n=>3, :m=>5})
+\end{verbatim}
+
+In order to better support this style of programming, Ruby allows you to omit
+the curly braces: \verb|sequnnce(:m=>3, :n=>5)|
+\subsection{Block Arguments}
+Block is a chunk of Ruby code associated with a method invocation, and that an
+iterator is a method that expects a block.
+
+One of the features of blocks is their anonymity They are not passed to the
+method in a traditional sense, they are invoked with a keyword \verb|yield|
+rather than with a method
+
+If you prefer more explicit control over a block, add a final argument to your
+method, and \emph{prefix the argument with an ampersand}. If you do this, then
+that argument will be a \verb|Proc| object, and instead of using \verb|yield|,
+you invoke that \verb|call| method:
+\begin{verbatim}
+def sequence(n, m, c, &b) 
+    i = 0
+    while(i < n) {
+        b.call(i*m + c)
+        i += 1
+    end
+end
+\end{verbatim}
+
+Notice that using the ampersand in this way changes only the method definition.
+The method invocation remains the same.
+
+Block arguments prefix with ampersands must be the last parameter.
+\subsection{Using \& in the method invocation}
+When \verb|&| is used before a \verb|Proc| object in a method invocation, it
+treats the \verb|Proc| object as if it was an ordinary block following the
+invocation.
+\begin{verbatim}
+a, b = [1,2,3], [4,5]
+summation = Proc.new{|total, x| total + x} #A Proc object for summation}
+sum = a.inject(0, &summation)
+sum = b.inject(sum, &summation)
+\end{verbatim}
+
+In a method invocation an \verb|&| typically appears before a \verb|Proc|
+object. But it is actually allowed before any object with \verb|to_proc| method.
+The \verb|Method| class has such a method.
+
+In 1.9, the \verb|Symbol| class define a \verb|to_proc| method, allowing symbols
+to be prefixed with \verb|&| and passed to iterator:
+\begin{verbatim}
+words = ['and', 'but', 'car']
+upper = words.map &:upcase
+#equivelent to:
+upper = words.map { |w| w.upcase}
+\end{verbatim}
+
+\section{Procs and Lambdas}
+It is possible to create an object that represents a block. Depending on how the
+object is created, it is called a \emph{proc} or \emph{lambda}
+
+Procs are block-like behavior and lambdas have method-like behavior.Both,
+however, are instances of \verb|Proc| class.
+
+\subsection{Creating Procs}
+Method that return a Proc:
+\begin{verbatim}
+def makeproc(&p)
+    p
+end
+adder = makeproc {|x,y| x+y}
+sum = adder.call(2,2)
+\end{verbatim}
+
+As well as creating procs by method invocation, there are three methods hat
+create \verb|Proc| objects in ruby and it is not necessary to define a
+\verb|makeproc| method.
+
+\subsubsection{Proc.new}
+It's the most obvious way to create a new instance of the \verb|Proc| class:
+\begin{verbatim}
+p = Proc.new{|x,y| x+y }
+\end{verbatim}
+
+\subsubsection{Kernel.lambda}
+\verb|lmbda| is a method of the \verb|Kernel| module, so it behaves like a
+global function. Lambda expects no arguments, but there must be a block
+associated with the invocation:
+\begin{verbatim}
+is_positive = lambda {|x| x > 0}
+\end{verbatim}
+
+\subsubsection{Kernel.proc}
+In 1.9, proc is a synonym for Proc.new
+
+\subsubsection{Lambda Literals}
+In Ruby 1.9, we can convert lambda declaraction to a literal as follows:
+\begin{enumerate}
+\item Replace the method name \verb|lambda| with the punctuation \verb|->|.
+\item Move the list of arguments outside of and just before the curly braces
+\item Change the argument list delimiters form || to ().
+\end{enumerate}
+\verb|succ = ->(x){ x+1 }|
+One benefit of this new syntax is its succinctness. It can helpful when you want
+to pass a lambda as an argument to a method or to another lambda.
+
+Lambda literals create \verb|Proc| objects and are not the same thing as blocks
+
+\subsubsection{Invoking Procs and Lambdas}
+Procs and lambdas are objects, not methods, and they cannot be invoked in the
+same way that methods are.
+
+\verb|Proc| class defines a method named \verb|call|. Invoking this method
+executes the code in the original block. The arguments you pass to the
+\verb|call| method become arguments to the block, and return value value of the
+block becomes the return value of the call method.
+
+The \verb|Proc| class also defines the array access operator to work the same
+way as \verb|call|. This means that you can invoke a proc or lambda using a
+syntax that is like method invocation:
+\begin{verbatim}
+f = Proc.new { |x, y| 1.0/(1.0/x + 1.0/y) }
+z = f.call(x,y)
+z = f[x,y]
+z = f.(x,y)    #Ruby 1.9 only
+\end{verbatim}
+
+\verb|.()| looks like a method invocation missing the method name. It can be
+used with any object that defines a \verb|call| method and is not limited to
+\verb|Proc| objects.
+
+Ruby 1.9 adds a \verb|curry| method to the \verb|Proc| class. Calling this
+method returns a curried version of proc or lambda. When a curried proc or
+lambda is invoked with insufficient arguments it returns a new \verb|Proc|
+object with the given arguments applied.
+\begin{verbatim}
+product = ->(x,y){x*y}
+triple = product.curry[3]
+\end{verbatim}
+
+\section{Return in blocks, procs, and lambdas}
+The \verb|return| statement in a block does not just return from the block to
+the invoking iterator, \emph{it returns from the method that invoke the
+iterator}.
+
+A proc is like a block, so if you call a proc that executes a \verb|return|
+statement, it attempts to return from the method that encloses the block that
+was converted to the proc.
+
+Lambdas work more like methods than blocks. A \verb|return| statement in a
+lambda returns from the lambda itself, not from the method that surrounds the
+creation site of the lambda.
+
+\section{Break in blocks, procs and lambdas}
+When we create a proc with \verb|Proc.new|, \verb|Proc.new| is the iterator that
+\verb|break| would return from. And by the time we can invoke the proc object,
+the iterator has already returned. So it never makes sense to have a top-level
+\verb|break| statement.
+
+If we create a proc object with an \verb|&| argument to the iterator method,
+then we can invoke it and make the iterator return.
+
+Lambdas are method-like, so putting a \verb|break| statement at the top-level of
+a lambda, without an enclosing loop or iteration to break out of, doesn't
+actually make any sense!
+
+We might expect the following code to fail because there is nothing to break out
+of in the lambda.
+\section{Argument passing to procs and lambdas}
+Invoking a block with \verb|yield| is similar to, but not the same as, invoking
+a method:
+\begin{itemize}
+\item The \verb|yield| uses \emph{yield semantics},similar to parallel
+assignment.
+\item Method invocation uses \emph{invocation semantics}
+\end{itemize}
+
+Invoking proc uses yield semantics and invoking a lambda uses invocation
+semantics. \verb|call| method.
+
+\chapter{Class and Modules}
+\section{Object Creation and Initialization}
+\subsection{new, allocate, and initialize}
+Every class inherits the class method new. This method has two jobs:
+\begin{itemize}
+\item It must allocate a new object
+\item It must initialize the object.
+\end{itemize}
+
+If the new method were actually written in Ruby, it looks like this:
+\begin{verbatim}
+def new(*args)
+    o = self.allocate
+    o.initialize(*args)
+end
+\end{verbatim}
+
+\verb|allocate| is an instance method of Class, and it is inherited by all class
+objects. Its purpose is to create a new instance of the class.
+
+\verb|initialize| is an instance method. Most classes need one, and every class
+that extends a class other than Object should use super to chain to the
+initialize method of the superclass. The usual job of the initialize method is
+to create The return value of initialize is ignored. Ruby implicitly makes the
+initialize method private.
+
+\subsection{dup, clone, and initialize\_copy}
+\verb|dup| allocate a new instance of the class of the object on which they are
+invoked. They then copy all the instance variables and the taintedness of the
+receiver object to the newly allocated object. Clone takes this copying a step
+further than dup -- it also copies singleton methods of the receiver object and
+freezes the copy object if the origin is frozen.
+
+If a class defines a method named \verb|initialize_copy|, then the clone and dup
+will invoke that method on the copied object after copying the instance
+variables from the original.
+
+When clone and dup copy instance variables from the original object to copy,
+they copy references to the values of those variables; they do not copy the
+actual values.
+
+\subsection{marshal\_dump and marshal\_load}
+A third way that objects are created is when \verb|Marshal.load| is called to
+re-create objects previous marshaled with \verb|Marshal.dump|
+
+\verb|Marshal.dump| saves the class of an object and recursively marshal the
+value of each of its instance variables.
+
+You can customize the way an object is marshaled by defining a
+\verb|marshal_dump| instance method in the class; it should return a different
+object (such as a string or an array of selected instance variable values) to be
+marshaled in place of the receiver object.
+
+If you define a custom \verb|marshal_dump|. It will be passed a reconstituted
+copy of the object returned by \verb|marshal_dump|, and it must initialize the
+state of the receiver object based on the state of the object it is passed.
+
+\section{Modules}
+Like a class, a module is a named group of methods, constants, and class
+variables. Unlike class however, a module cannot be instantiated and it cannot
+be subclassed. Modules
+\end{document}
+

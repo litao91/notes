@@ -1,23 +1,249 @@
-\documentclass[a4paper,12pt]{book}
+\documentclass[11pt, a4paper]{book}
 \usepackage{parskip}
-\topmargin -1.5cm
-\oddsidemargin -0.04cm
-\evensidemargin -0.04cm
-\textwidth 16.59cm
-\textheight 25cm
-
+\usepackage[top=1.5cm, left=1cm, right=1cm, bottom=2.5cm]{geometry}
+\usepackage{fontspec}
+\usepackage{graphicx}
+\setmainfont{DejaVu Serif}
 \author{LI Tao}
 \title{CPP General Notes}
-
 \begin{document}
-\maketitle
+
+\chapter{The C part of CPP}
+\section{General}
+
+\begin{itemize}
+\item In function definition, names are required in C, but C++ can have unnamed
+variables.
+\item Empty list: \verb|func( );| in C++, but in C it means an indeterminate
+number of arguments.\verb|func(void)| is empty in both.
+\item Uncertain argument list is represented by ellipses\verb|(...)|
+\item A C++ function prototype must specify the return value of the function (in
+C, if you leave of, it defaults to \verb|int|
+\item Traditional procedure language(including C) require that all variables be
+defined at the beginning of the block. But C++ doesn't.
+\item The \verb|void| type works with pointers. If you state that a pointer is
+a \verb|void*|, it means that any type of address at all can be assigned to that
+pointer.Once you assign to a \verb|void*| you lose any information about what
+type it is. This means before you can use the pointer, you must cast it to the
+correct type:
+\begin{verbatim}
+int main() {
+    int i = 99;
+    void *vp = &i;
+    //Can't deference a void pointer
+    *vp = 3; //Compile-time error
+    //Must cast back to int:
+    *((int*)vp) = 3;
+}
+\end{verbatim}
+
+\item The scope of a variable extends from the point where it is defined to the
+first closing brace that matches the closest opening brace before the variable
+was defined. Scopes can be nested, indicated by matched pairs of braces inside
+other matched pairs of braces.
+\item Both language require that variable be defined before they are used, but C
+forces you to define all the variables at the beginning of a scope. C++ allows
+you to define variables anywhere in a scope.
+\end{itemize}
+
+\section{Specifying storage allocation}
+When creating a variable, you have a number of options to specify the lifetime
+of the variables, how storage is allocated for that variable, and how the
+variable is treated by the compiler.
+\subsection{Global Variables}
+Global variables are defined outside all function bodies and are available to
+all  parts of the program(\textbf{even code in other files}).Global variables
+are unaffected by scope and are always available. (i.e. lasts until the program
+ends.).
+
+If the existence of a global variable in one file is declared using the
+\verb|extren| keyword in another file, the data is available for use by the
+second file.
+
+\subsection{Register Variable}
+A register variable is a type of local variable. The \verb|register| keyword
+tells the compiler "Make access to this variable as fast as possible".
+
+There is restrictions to the use of \verb|register| variables. You cannot take
+or compute the address of a \verb|register| variable. A register variable can be
+declared only within a block.
+
+\subsection{static}
+\subsubsection{First Meanning}
+Normally, variables defined local to a function disappear at the end of the
+function scope. When you call the function again, storage fro the variables is
+created and the value are reinitialized. If you want a value to be extant
+throughout the life of a program, you can define a function's variable to be
+\verb|static| and give it a initial value. The initialization is performed only
+the first time the function is called, and the data retains its value between
+function calls.The beauty of a \verb|static| variable is that it is unavailable
+outside the scope of the function.
+
+\subsubsection{Second Meaning}
+When \verb|static| is applied to a function name or to a variable that is
+outside of all functions, it means "This name is unavailable outside of this
+file." We say it a \emph{file scope}
+\subsection{Linkage}
+In an executing program, an identifier is represented by storage in memory that
+holds a variable or compiled function body. Linkage describes this linkage:
+\emph{internal linkage} and \emph{external linkage}.
+
+Internal linkage means that storage is created to represent the identifier only
+for the file being compiled. Other files may use the same identifier name with
+internal linkage, or for a global variable, and no conflicts will be found by
+the linker -- separate storage is created for each identifier. Internal linkage
+is specified by \verb|static| in C and C++.
+
+
+External linkage means that a single piece of storage is created to represent
+the identifier for all files being compiled. The storage is created once, and
+the linker must resolve all other references to that storage. Global variables
+and function names have external linkage. These are accessed from other files by
+declaring them with the keyword \verb|extern|. Variables defined outside all
+functions(with the exception of \verb|const| in C++) and function definitions
+default to external  You can explicitly state that an identifier has external
+linkage by defining it with the \verb|extern| keyword.
+
+\subsection{Constants}
+In C, the compiler treats a \verb|const| just like a variable that has a special
+tag attached that says "Don't change me." When you define a \verb|const| in C,
+the compiler creates storage for it, so if you define more than one \verb|const|
+with the same name in two different files, the linker will generate error
+message about conflicts.
+
+\subsubsection{Constant Value}
+In C++, a \verb|const| must always have an initialization value. Constant value
+for build-in types are expressed as decimal, octal, hexadecimal, or
+floating-point numbers, or as characters.
+
+\subsection{volatile}
+The qualifier \verb|volatile| tells the compiler "You never know when this will
+change", and prevents the compiler from performing any optimizations based on
+teh stability of that variable. A \verb|volatile| variable is always read
+whenever its value is required, even if it was just read the line before.
+
+\section{Introduction to preprocessor macros}
+\begin{verbatim}
+#define PRINT(STR, VAR)\
+ cout << STR "=" << VAR << endl
+\end{verbatim}
+Preprocessor macros are traditionally named with all uppercase letters so they
+stand out.
+
+The arguments in the parenthesized list following the macro name are substituted
+in all the code following the closing parenthesis. The preprocessor removes the
+name \verb|PRINT| and substitutes the code wherever the macro is called, so the
+compiler cannot generate any error message using the macro name, and.
+
+\section{Operators}
+\subsection{The comma operator}
+Comma can also be used as an operator to separate expressions -- in this case it
+products only the value of the last expression.
+\subsection{Casting operators}
+The word \emph{cast} is used in the sense of "casting into a mold". The compiler
+will automatically change one type of data into another if it make sense.
+
+To perform a cast, put the desired data type (including all modifiers) inside
+parentheses to the left of the value.
+
+C++ has an additional casting syntax, which follows the function call syntax.
+This syntax puts the parentheses around the argument, like a function call.
+\subsection{C++ explicit casts}
+Standard C++ include an explicit cast syntax that can be used to completely
+replace old C-style casts.
+\begin{itemize}
+\item \verb|static_cast| is used for all conversions that are well-defined.
+\item \verb|const_cast| convert from a \verb|const| to a non \verb|const| or
+from a \verb|volatile| to a non \verb|volatile|.
+\item \verb|reinterpret_cast| This is the least safe of the casting mechanisms,
+and the one most likely to produce bugs. It pretends that an object is just a
+bit pattern that can be treated as if it were entirely different type of object.
+\end{itemize}
+\subsection{The asm keyword}
+This is an escape mechanism that allows you to write assembly cod for your
+hardware within your C++ program.
+\section{Compound Types}
+\subsection{Saving memory with union}
+A \verb|union| piles all the data into a single space; it figures out the amount
+of space necessary for the largest item you've put in the \verb|union|, and
+makes that the size of the union.
+
+Anytime you place a value in a \verb|union|, the value always starts in the same
+place at the beginning of the \verb|union|, but only uses as much space as is
+necessary.
+
+\section{Function addresses}
+Once a function is compiled and loaded into the computer to be executed, it
+occupies a chunk of memory. That memory, and thus the function, has address.
+
+You can use function addresses with pointers just as you can use variable
+addresses.
+
+To define a pointer to a function that has no arguments and no return value:
+\begin{verbatim}
+void (*funcPtr)();
+\end{verbatim}
+How to read:
+\begin{itemize}
+\item Starting in the middle: starting at the variable name, which is
+\verb|funcPtr|
+\item Working your way out: Looking to the right for the nearest item, then
+looking to the left (a pointer denoted by the asterisk), then looking to the
+right (an empty argument list indicating a function that taking no arguments),
+then looking to the left(\verb|void| indicates the function has no return
+value.)
+\end{itemize}
+This right-left-right motion works with most declarations.
+
+\chapter{Data Abstraction}
+\section{Bad guesses}
+Although you should always declare functions by including a header file,
+function declarations aren't essential in C. It's possible in C (but NOT in C++)
+to call a function that you haven't declared.
+
+This is a dangerous practice, because the C compiler can assume that a function
+you call with a \verb|int| argument has an argument list containing \verb|int|,
+even if it may actually contain a \verb|float|. This can produce bugs that are
+very difficult to find.
+
+Each separate C implementation file (with an extension of \verb|.c|) is a
+translation unit. That is, the compiler is run separately on each translation
+unit, and when it is running it is aware of only that unit. Thus, any
+information you provide by including header files is quite important because
+it determines the compiler's understanding of the rest of your program.
+
+\section{The basic object}
+In C++, instead of forcing you to pass the address of the structure as the first
+argument to all functions that operate on that structure, \emph{the compiler
+secretly does this for you}.
+
+The declarations in the header files are \emph{required} by the compiler. In C++
+you cannot call a function without declaring it first. The C++ compiler
+virtually ensures that you will perform this declaration by including the header
+file.
+
+Of course, global functions can still be declared by hand every where they are
+defined and used. However, \emph{structures must always be declared before they
+are defined or used}.
+\section{Object details}
+The code the C compiler produces for a C \verb|struct| will usually look
+\emph{exactly} the same as the code produced by a C++ compiler. The size of a
+\verb|struct| is the combined size of all its members. Sometimes when the
+compiler lays out a \verb|struct|, it adds extra bytes to make the boundaries
+come out neatly.
+\section{Friends}
+Explicitly grant access to a function that isn't a member of the current
+structure. By declaring that function a \verb|friend| \emph{inside} the
+structure declaration. 
+
 \chapter{Basic Concepts}
 \section{External Variable}
-An external variable is a variable defined outside funciton block. On the other hand, a local (automatic) variable is a variable defined inside a fucntion block. That is variables that can be accessed by name by any function. 
+An external variable is a variable defined outside function block. On the other
+hand, a local (automatic) variable is a variable defined inside a function block. That is variables that can be accessed by name by any function.
 
 Because external variables remain in existence premanently, rather than appearing and disappearing as functions are called and exited, they retain their values even after the functions that set them have returned.
 
-The extern keyword means "declare without defining". It is a way to force adeclaration without a definition.
+The extern keyword means "declare without defining". It is a way to force declaration without a definition.
 
 An external variable must be defined, exactly once, outside of any function; this sets aside storage for it. The variable must also be declared in each function that wants to access it; this states the type of the variable.
 
@@ -33,6 +259,373 @@ For primitive type, declaration also definition (without extern keyword), becaus
 
 One definition and many declarations.
 
+\section{Storage Allocation}
+In C++, a variable can be defined at any point in a scope, so it might seem that
+the storage for a variable may not be defined until its point of definition.
+It's actually more likely that the compiler will follow the practice in C of
+allocating all the storage for a scope at he opening brace of that scope.
+
+\section{Aggregate Initialization}
+An aggregate is a bunch of things clumped together, this definition includes
+aggregates of mixed types, like structs and classes. 
+
+The aggregate assignment comes in several flavors, but in all cases the elements
+in the assignment must be surrounded by curly braces.
+
+\begin{itemize}
+\item For an array of built-in types: \verb|int a[5] = { 1, 2, 3, 4, 5};|.
+\emph{If you give more initializers, compiler gives an error message, if you
+give less, others will be zero}.
+\item Automatic counting: \verb|int c[] = {1, 2, 3, 4};|, the expression
+\verb|sizeof c/sizeof *c|(entire array divided by the first element) gives the
+array size.
+\item C style struct has all its members \verb|public|, they can be assigned
+directly.
+\item Constructors are a way of forcing initialization. eg.
+\verb|Y y1[] = {Y(1), Y(2), Y(3)};|
+\end{itemize}
+\section{Function Overloading}
+You can use the same function name for different functions as long as the
+argument lists are different. The compiler \emph{decorates the name, the scope,
+and the argument lists} to produce internal names for it and the linker to use
+\section{Union}
+Union can have constructor and access control like a class. But it cannot be the
+base class in inheritance.
+
+The \verb|union| has no type name and no variable name. This is called an
+anonymous union, and creates space for the union but doesn't require accessing
+the \verb|union| name and the dot operator. You access members of an anonymous
+union just as if they were ordinary variables. The only difference is that both
+variables occupy the same space. If the anonymous \verb|union| is at file scope
+then it must be declared \verb|static| so it has internal linkage.
+
+\chapter{Constants}
+\section{Value substitution}
+A \verb|const| in C++ defaults to \emph{internal linkage}; that is, it is
+visible only within the file where it is defined and cannot be seen at link time
+by other translation units. You must always assign a value to a \verb|const|
+when you define it, \emph{except when you make an explicit declaration using
+extern}
+
+Normally, the C++ compiler avoids creating storage for a \verb|const|, but
+instead holds the definition in its symbol table. When you use \verb|extern|
+with \verb|const|, however, you force storage to be allocated.
+
+The goal of never allocating storage for a \verb|const| also fails with
+complicated structures. Whenever the compiler must allocating storage, constant
+folding is prevented.
+
+\section{Aggregates}
+It's possible to use \verb|const| for aggregates, but storage will be allocated.
+In these situations, \verb|const| means "a piece of storage that cannot be
+changed." However, the value cannot be used at compile time because the compiler
+is not required to know the contents of the storage at compile time.
+
+\section{Pointers}
+Pointer to Constant: \verb|const int* u;| or \verb|int const* v;|.
+
+Const pointer: \verb|int* const w = &d;|.
+
+Make a \verb|const| pointer to a \verb|const| object:
+\begin{verbatim}
+int d = 1;
+const int* const x1 = &d;
+//or
+int const* const x2 = &d;
+\end{verbatim}
+
+\section{Character array literals}
+The place where strict constness is not enforced is with character array
+literals. You can say:
+\begin{verbatim}
+char* cp = "howdy";
+\end{verbatim}
+and the compiler will accept it without complaint(It's deprecated). This is technically an error
+\emph{because a char literal is created by the compiler as a constant character array,
+and the result the quoted char array is its starting address in memory.}
+
+
+So character array literals are actually constant character arrays. If you try
+to change the values in a character array literal, the behavior is undefined.
+
+If you want to modify a string, keep it in an array: \verb|char cp[] = "howdy";|
+
+\section{Arguments and return value}
+\subsection{Returning value}
+Returning by value as a \verb|const| becomes important when you're dealing with
+user-defined types. If a function returns a class object by value as
+\verb|const|, the return value of that function \emph{cannot be an lvalue}.
+\subsection{Temporaries}
+Sometimes, during the evaluation of an expression, the compiler must create
+\emph{temporary objects}. These are objects like any other: they require storage
+and they must be constructed and destroyed.
+
+The difference is that you never see them -- the compiler is responsible fro
+deciding that they're needed and the details of their existence. But there is
+one thing about temporaries: they're automatically \verb|const|. Because you
+usually won't be able to get your hands on a temporary object, telling it to do
+something that will change that temporary object, telling it to do something
+that will change that temporary is almost certainly a mistake because you won't
+be able to use that information. By making all temporaries automatically
+\verb|const|, the compiler informs you when you make that mistake.
+
+e.g. \verb|f1(f2())|
+
+This will be fine if \verb|f1| took its argument by value; then the temporary
+would be copied into \verb|f2| and it wouldn't matter what happened to the
+temporary. However, \verb|f2()| takes its argument by reference, which means in
+this example takes the address of the temporary \verb|X|
+
+\section{Classes}
+\subsection{const in classes}
+One of the place you'd like to use a \verb|const| for constant expression is
+inside classes. The typical example is when you're creating an array inside a
+class and you want to use \verb|const| instead of \verb|#define| to establish
+the array size.
+
+Inside a class, \verb|const| partially reverts to its meaning in C. It allocates
+storage within each object and represents a value that is initialized once and
+then cannot change. However, each different object may contain a different value
+for that constant.
+
+Thus, when you create an ordinary (non-\verb|static|) \verb|const| inside a
+class, you cannot give it an initial value.
+
+This initialization must occur \emph{in a special place of the constructor}.
+Because inside the main body of the constructor the \verb|const| must
+\emph{already} be initialized.
+
+\subsubsection{The constructor initializer list}
+The special initialization point is called the \emph{constructor initializer
+list}.Occur after the function argument list and a colon, but before the opening
+brace of the constructor body.
+
+\subsection{Compile-time constants in classes}
+Use the \verb|static|, means "there's only one instance, regardless of how many
+objects of the classes are created,". Thus, a \verb|static const| of built-in
+type can be treated as compile-time constant.
+
+You must provide the initializer at the point of definition of the \verb|static
+const|. (This is something that only occurs with the \verb|static const|).
+\subsection{const objects \& member functions}
+If you want to create a \verb|const| member function, and you'd still like to
+change some of the data in the object, you have two ways, the first way is
+\emph{casting away constness}. You take \verb|this| keyword and cast it to a
+pointer to an object of the current type. It would seem that \verb|this| is
+already such a pointer. However, inside a \verb|const| member function it is
+actually a \verb|const| pointer, so by casting it to an ordinary pointer, you
+remove the \verb|const|ness for that operation.
+
+\begin{verbatim}
+class Y {
+    int i;
+public:
+    Y();
+    void f() const;
+}
+
+Y::Y() {i = 0; }
+
+void Y::f() const {
+    ((Y*)this)->i++;             // OK: cast away const-ness
+    (const_cast<Y*>(this))->i++; // Better: Use C++ explicit cast
+}
+\end{verbatim}
+
+Problem: This lack of \verb|const|ness is hidden away in a member function
+definition, and you have no clue from the class interface that the data of the
+object is actually being modified unless you have access to the source code. To
+put everything out in open, you should use the \verb|mutable| keyword in the
+class declaration to specify that particular data member may be changed inside a
+\verb|const| object. 
+\begin{verbatim}
+class Z {
+    int i;
+    mutale int j;
+public:
+    Z();
+    void f() const;
+};
+void Z::f() const {
+    i++; //Error -- const member function
+    j++; //OK: mutable
+}
+\end{verbatim}
+\subsubsection{ROMability}
+If an object is defined as const, it is a candidate to be placed in the
+read-only memory, which is often an important consideration in embedded systems
+programming. And it must be \emph{bitwise} const. In addition:
+\begin{enumerate}
+\item The class or struct must have no user-defined constructors or destructor.
+\item There can be no base class or member objects with user-defined constructors
+or destructors.
+\end{enumerate}
+\chapter{Inline Functions}
+To retain the efficiency of the preprocessor macro, but to add the safety and
+class scoping of true functions, C++ has the \emph{inline function}. 
+\section{MACRO pitfalls}
+There are two problems:
+\begin{itemize}
+\item Expressions may expand inside the macro so that their evaluation
+precedence is different from what you expect.
+\item Every time you use an argument in a macro, that argument is evaluated. As
+long as the macro is called only with the ordinary variables, this evaluation is
+benign, but if the evaluation of an argument has side effect, then the results
+can be surprising and will definitely no mimic function behavior.
+\item A macro has no concept of the scoping required with member functions. The
+preprocessor simply performs text substitution.There is simply no way to express
+class scope in a macro.
+\section{Inline functions}
+C++ implements the macro as \emph{inline function}, which is a true function in
+every sense.
+
+The only different is that an inline function is expanded in place, like a
+preprocessor macro, so the overhead of the function call is eliminated.
+
+Any function defined within a class body is automatically inline, but you can
+also make a non-class function inline by \emph{preceding it with the inline
+keyword}. However, for it to have any effect, you must include the function body
+with the declaration, otherwise the compiler will treat it as an ordinary
+function declaration.
+
+You'll almost always want to put inline functions in a header file. When the
+compiler sees such a definition, it puts the function type and the function in
+its symbol table. When you use the function, the compiler checks to ensure the
+call is correct and the return value is being used correctly, and then
+\emph{substitute} the function body for the function call, thus eliminating the
+overhead.
+\section{Inlines inside classes}
+Any function you define inside a class definition is automatically an inline.
+
+One of the most important uses of inlines inside classes is the \emph{access
+function}.
+\end{itemize}
+\section{Reducing clutters}
+Use the \verb|inline| keyword, instead of in place:
+\begin{verbatim}
+class Rectangle {
+  int width, height;
+public:
+  Rectangle(int w = 0, int h = 0);
+  int getWidth() const;
+  void setWidth(int w);
+  int getHeight() const;
+  void setHeight(int h);
+};
+
+inline Rectangle::Rectangle(int w, int h)
+  : width(w), height(h) {}
+
+inline int Rectangle::getWidth() const {
+  return width;
+}
+
+inline void Rectangle::setWidth(int w) {
+  width = w;
+}
+
+inline int Rectangle::getHeight() const {
+  return height;
+}
+
+inline void Rectangle::setHeight(int h) {
+  height = h;
+}
+
+int main() {
+  Rectangle r(19, 47);
+  // Transpose width & height:
+  int iHeight = r.getHeight();
+  r.setHeight(r.getWidth());
+  r.setWidth(iHeight);
+} ///:~
+\end{verbatim}
+\section{More preprocessor features}
+You \emph{almost} always want to use \verb|inline| functions instead of
+preprocessor macros. The exceptions are when you need to use three special
+features in the C preprocessor:
+\begin{enumerate}
+\item Stringizing: performed with the \verb|#| directive and allows you to take
+an identifier and turn it into a character array.
+\item string concatenation, takes place when two adjacent character arrays have
+no intervening punctuation, in which case they are combined.
+\item Token pasting.
+\end{enumerate}
+Example: \verb|#define TRACE(s) cerr << #s << endl;|
+\subsection{Token pasting}
+Token pasting, implemented with the \verb|##| directive, is very useful when you
+are manufacturing code. It allows you to take two identifiers and paste them
+together to automatically create a new identifier:
+\begin{verbatim}
+#define FIELD(a) char* a##_string; int a##_size
+class Record {
+    FIELD(one);
+    FIELD(two);
+    FIELD(three);
+}
+\end{verbatim}
+Each call to the \verb|FIELD()| macro creates an identifier to hold a character
+array and another to hold the length of that array.
+\chapter{Name Control}
+\section{Static elements in C}
+In both C and C++ the keyword \verb|static| has two basic meanings:
+\begin{enumerate}
+\item Allocate once at a fixed address; that is, teh object is created in a
+special \emph{static} data area rather than on the stack each time a function is
+called. This is the concept of \emph{static} storage.
+\item Local to a particular translation unit(and local to a class scope in C++).
+Here, \verb|static| controls the \emph{visibility} of a name, so that name
+cannot be seen outside the translation unit or class.
+\end{enumerate}
+
+Note: Destructors for static objects are called when \verb|main()| exits or when
+the Standard C library function \verb|exit()| is explicitly called. Static
+object destructors are \emph{not} called if you exit the program using the
+Standard C library function \verb|abort()|.
+
+You can specify actions to take place when leaving \verb|main()| (or calling
+\verb|exit()|) by using the Standard C library function \verb|atexit()|. In this
+case, the functions registered by \verb|atexit()| may be called before the
+destructors for any objects constructed before leaving \verb|main()|.
+
+\subsection{Controlling linkage}
+Ordinarily, any name at \emph{file scope} (that is, NOT nested inside a class or
+function) is visible throughout all translation units in a program. This is
+often called \emph{external linkage} because at link time the name is visible to
+the linker everywhere, external to that translation unit. Global variables and
+ordinary functions have external linkage.
+
+An object or function name at file scope(limit the visibility of a name to only
+file scope.). That name has \emph{internal linkage}. This means that you can use
+the same name in other translation unit without a name clash.
+
+One advantage to internal linkage is that the name can be placed in a header
+file without worrying that there will be a clash at link time.
+
+Names that are commonly placed in header files, such as \verb|const| definitions
+and \verb|inline| functions, default to internal linkage.
+
+\subsubsection{Confusion}
+\begin{itemize}
+\item All global objects implicitly have static storage class and visible to all
+translation units.
+\item In terms of visibility, the opposite of \verb|static| is \verb|extern|,
+which explicitly stats that the visibility of the name is across all translation
+units.
+\begin{verbatim}
+//In global scope
+int a = 0;
+//Is equivelent to:
+extern int a = 0;
+//Opposite to:
+static int a = 0;
+//All objects above are resides in the static area 
+\end{verbatim}
+
+\item If you declare what appears to be local variable as \verb|extern|, it means that
+the storage exists elsewhere.
+\item With function names, \verb|static| and \verb|extern| can only alter
+visibility.
 \chapter{Source Files and Programs}
 \section{Separate Compilation}
 A file is the tradition unit of compilation.

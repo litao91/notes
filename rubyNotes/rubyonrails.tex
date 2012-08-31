@@ -1,0 +1,265 @@
+\documentclass[11pt, a4paper]{book}
+\usepackage{parskip}
+\usepackage[top=1.5cm, left=1cm, right=1cm, bottom=2.5cm]{geometry}
+\usepackage{fontspec}
+\usepackage{graphicx}
+\setmainfont{Roboto}
+\setmainfont{DejaVu Serif}
+
+\begin{document}
+\chapter{Get Start}
+\section{Hello, Rails!}
+The \emph{Architecture of Rails Applications} is Model-View-Controller
+framework.
+\begin{enumerate}
+\item Rails accepts incoming request from a browser
+\item Decodes the request to find a controller.
+\item Calls an action method in that controller
+\item The controller invokes a particular view to display the results to the
+user.
+\end{enumerate}
+For Hello world program, We need code for a controller and a view, and we need a route to connect the two.
+
+Create Project:
+\begin{verbatim}
+rails new demo
+\end{verbatim}
+
+Create new controller:
+\begin{verbatim}
+rails generate controller Say hello goodbye
+\end{verbatim}
+
+The \verb|rails generate| command logs the files and directories it examines.
+
+\subsection{Rails and Request URLs}
+A rails application appears to its user to be associated with a URL. When you
+point your browser at the URL, you are talking to the application code, which
+generates a response to you.
+
+\subsection{Our First Action}
+We can see not only that have we connected the URL to our controller but also
+that Rails is pointing the way to our next step, namely, to tell Rails what to
+display.
+
+That's where views comes in. The script to create controller generates six files
+and a new directory to our application. That directory contains \emph{template
+files for the controller's view}. 
+
+In our case, we create a controller name say, so the views will be in he
+directory \verb|app/views/say|
+
+By default, \emph{Rails looks for templates in a file with the same name as the
+action it's handling}.In our case, we need to replace \verb|hello.html.erb| in
+the directory \verb|app/views/say|
+\subsection{Making it dynamic}
+\verb|ERb| is a filter that is installed as part of the Rails installation that
+takes an \verb|.erb| file and outputs a transformed version.
+
+Normal content is passed through without being changed. However, content between
+\verb|<%=| and \verb|%>| is interpreted as Ruby code and executed. The result of
+that execution is converted into a string, and that value is substituted in the
+file in place of \verb|<%=...%>|.
+\section{Linking Pages together}
+Normally, each page in your application will correspond to a separate view.
+We'll also use a new action method to handle the page. We'll use the same
+controller for both actions.
+
+Use \verb|<%= link_to "Goodbye", say_goodbye_path %>|. There is a \verb|link_to|
+call within an ERb sequence. This creates a link to a URL that will invoke the
+\verb|goodbye| action.
+\begin{itemize}
+\item The first parameter in the call is the text to be
+displayed in the hyperlink,
+\item And the next parameter tells rails to generate the
+link to the goodbye action.
+\end{itemize}
+
+Stop for a minute to consider how we generate the link. We wrote this:
+\begin{verbatim}
+link_to "Goodbye!", say_goodbye_path
+\end{verbatim}
+
+\begin{itemize}
+\item \verb|link_to| is a \emph{method call}. 
+\item \verb|say_goodbye_path| is a precomputed value that Rails makes avaliable
+to application views. It evaluates to the \verb|say/goodbye| path. 
+\end{itemize}
+
+\chapter{The Architecture of Rails Applications}
+\section{Model, Views and Controllers}
+\begin{description}
+\item [Model] Maintaining the state of the application, more than just data,
+\emph{it enforces all the business rules that apply to that data}. We put the
+implementation of these business rules in the model and make sure that nothing
+else in the application can make our data invalid. The model acts as
+\textbf{gatekeeper and a data store}
+
+\item [View] Responsible for generating a user interface, normally based on the
+data in the model.The view itself \emph{never handles incoming data}, the view's
+work is done once the data is displayed. 
+
+\item [Controllers] orchestrate the application. Controllers receive events
+from the outside world, interact with the model, and display an appropriate view
+to the user. 
+\end{description}
+
+In a rails application:
+\begin{enumerate}
+\item Incoming request is first sent to a router, which \emph{works out where in
+the application the request should be sent and how the request itself should be
+parsed}
+\item Routing identifies a particular method (called \emph{action}) in the
+controller. The action might look at the data in the request, it might interact
+with the model, and it might cause other application to be invoked.
+\item Eventually the action prepares information for the view, which renders
+something to the user.
+\end{enumerate}
+\section{Rails Model Support}
+\subsection{Object-Relational Mapping}
+ORM libraries map database tables to classes. If a database has a table called
+\verb|orders|, our program will have a class named \verb|Order|. Rows in this
+table correspond to objects of the class -- a particular order is represented as
+an object of class \verb|Order|.
+\begin{itemize}
+\item Rows -- objects of the classes, a particular order is represented as an
+object of class \verb|Order|, a particular order is represented as an object of
+class \verb|Order|
+\item Within that object, attributes are used to get and set the individual
+columns.
+\item The Rails classes that wrap our database tables provide a set of
+class-level methods that perform table-level operations. For example, we might
+need to find the order with a particular id. This is implemented as a class
+method that returns the corresponding Order object.
+\end{itemize}
+
+So ORM layer maps tables to classes, rows to objects, and columns to attributes
+of those objects.
+
+Class methods are used to perform table-level operations.
+\subsection{Active Record}
+\emph{Active Record} is the ORM layer supplied with Rails. It differs from most
+other ORM libraries in the way it is configured.
+
+Here's a program that uses Active Record to wrap our orders table:
+\begin{verbatim}
+require 'active_record'
+
+class Order < ActiveRecord::Base
+end
+order = Order.find(1)
+order.pay_type = "Purchase order"
+order.save
+\end{verbatim}
+
+This code uses the new \verb|Order| class to fetch the order with an id of 1 and
+modify the \verb|pay_type|. (Creating connection to DB omitted)
+
+\subsection{Action Pack: the View and Controller}
+The controller supplies data to the view, and the controller receives events
+from the pages generated by the views. Support for views and controllers in
+Rails is bundled into a single component, \emph{Action Pack}
+
+\subsubsection{View Support}
+In Rails, the view is responsible for creating either all or part of a response
+to be displayed in a browser, processed by templates, which come in three
+flavors.
+
+\begin{itemize}
+\item Embedded Ruby(ERb), embeds snippets of Ruby code within a view document.
+Flexible but we risk adding logic that should be in the model or controller.
+\item XML Builder can also be used to construct XML document using Ruby code.
+\item RJS views allow you to create JavaScript fragments on the server that are
+then executed on the browser. This is great for creating dynamic Ajax interface.
+\end{itemize}
+
+\subsubsection{And the controller}
+Home to a number of important ancillary services:
+\begin{itemize}
+\item Responsible for routing external requests to internal actions.
+\item Manages caching.
+\item Manages helper modules.
+\item Manages sessions.
+\end{itemize}
+
+\chapter{Creating The application}
+\section{Generating the Scaffold}
+With Rails, you can do all that with one command by asking Rails to generate
+what is know as \emph{scaffold} of given model.
+
+Note that on the command line that follows, we use the singular form, Product.
+In Rails, a model is \emph{automatically mapped to a database table whose name
+is the plural form of hte model's class.} In our case, we asked for a model
+called \verb|Product|, so Rails associate it with the table called
+\verb|products|. And how will it find that table? The \verb|development| entry
+in \verb|config/database.yml| tells Rails where to look for it. For SQLite3
+users, this will be a file in db directory.)
+\begin{verbatim}
+depot> rails generate scaffold Product \
+title:string description:text image_url:string price:decimal
+\end{verbatim}
+The generated file that we're interested in first is the migration one. A
+migration \textbf{represents a change we want to make to the data}, expressed
+in a source file in database-independent terms. These changes can update both
+the database schema and the data in the database tables.
+
+The migration has a UTC-based timestamp prefix, a name and a file extension.
+\end{document}
+\chapter{Router}
+\section{Connecting URLs to Code}
+Request: \verb|GET /patients/17|, it asks the router to match it to a controller
+action, if the first matching route is:
+\verb|match "patients/:id" => "patients#show"|, the request is dispatched to the
+\verb|patients| controller's show action with \verb|{:id => "17"}| in
+\verb|params|
+
+\section{Generating Paths and URLs from Code}
+You can also generate paths and URLs. If your application contains this code:
+\begin{verbatim}
+@patient = Patient.find(17)
+...
+<%= link_to "Patient Record", patient_path(@patient) %>
+\end{verbatim}
+The router will generate the path \verb|/patients/17|. This reduces the
+brittleness of your view and makes your code easier to understand.
+
+\section{Resource Routing: the Rails Default}
+\subsection{Resources on the Web}
+Browsers request pages from Rails by making a request for a URL using a specific
+HTTP method. Each method is a request to perform an operation on the resource. A
+resource route maps a number of related requests to action in a controller.
+
+When receives:\verb|DELETE /photos/17|, it asks the router to map a controller
+action. If the first matching route is:\verb|resources :photo|, Rails would
+dispatch the request to the \verb|destroy| method on the \verb|photos|
+controller with \verb|{:id=> "17"}| in \verb|params|
+
+\verb|CRUD, Verbs and Actions|
+In Rails, a resourceful route provides a mapping between HTTP verbs and URLs to
+controller actions. By convention, each action also maps to particular CRUD
+operations in a database. A single entry such as \verb|resources: photos|
+creates seven different routes in your application, all mapping to the
+\verb|PhotosController|
+
+\subsection{Paths and URLs}
+Creating a resourceful route will also expose a number of helpers to the
+controllers in your application:
+\begin{itemize}
+\item \verb|photos_path| returns \verb|/photos|
+\item \verb|new_photos_path| returns \verb|/photos/new|
+\item \verb|edit_photo_path(:id)| returns \verb|/photos/:id/edit|
+\item \verb|photo_path(:id)| returns \verb|/photo/:id|
+\end{itemize}
+
+Each of these helpers has a corresponding \verb|_url| helper (such as
+\verb|photos_url|) which returns the same path prefixed with the current host,
+port and path prefix.
+
+\chapter{Controller}
+\section{What does it do}
+After routing has determined which controller to use for a request, your
+controller is responsible for making sense of request and producing the
+appropriate output.
+
+For most conventional RESTful applications, the controller will receive the
+request, fetch or save data from a model and use a view to create HTML output.
