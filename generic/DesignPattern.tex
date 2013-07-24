@@ -484,7 +484,66 @@ Specify the kinds of objects to create using a prototypical instance, and create
 new objects by copying this prototype.
 \subsection{Motivation}
 Build an editor for music scores by customizing a general framework for
-graphical editors and adding new objects that represent notes
+graphical editors and adding new objects that represent notes, rests, etc. Let's
+assume the framework provides an abstract graphic class for graphical
+components, like notes and staves. The framework also predefine a GraphicTool
+subclass for tools that create instances of graphical objects and add them to
+the document.
 
+But GraphicTool presents a problem: \emph{the class for notes and staves are specific
+to our application, but the GraphicTool belongs to the framework}, GraphicTool
+doesn't know how to create instances of our music classes to add to the score.
+We could subclass GraphicTool for each kind of music object, but that would
+produce lots of subclasses that differ only in the kind of music object they
+instantiate.
+
+The solution lies in making GraphicTool create a new Graphic by copying or
+"cloning" an instance of a Graphic subclass. We call this instance a
+\textbf{prototype} 
+
+So in our music editor, each tool for creating a music object is an
+\emph{instance of GraphicTool that's initialized with a different prototype},
+Each GraphicTool instance will produce a music object by cloning its prototype
+and adding the clone to the score. This can reduce the number of classes in the
+system dramatically.
+
+\subsection{Applicability}
+\begin{itemize}
+    \item A system should be independent of how its products are created.
+    \item The class to instantiate are specified at run time.
+    \item Avoid building a class hierarchy of factories that parallels the class
+        hierarchy of products.
+    \item When instances of a class can have one of only a few different
+        combinations of state.
+\end{itemize}
+\subsection{Structure}
+\includegraphics{Proto_stru}
+\subsection{Participants}
+\begin{description}
+    \item [Prototype] declare an interface for cloning itself.
+    \item [ConcretePrototype], implements an operation for cloning itself.
+    \item [Client] Creates a new object by asking prototype to clone itself.
+\end{description}
+\subsection{Consequence}
+\begin{enumerate}
+    \item Adding and removing products at runtime.
+    \item Specifying new objects by varying values. You effectively define new
+        kinds of objects by instantiating existing classes and registering the
+        instances as prototypes of client objects. This kind of design lets user
+        \emph{define new "classes" without programming.}
+    \item Specifying new objects by varying structure.
+    \item Reduced subclassing
+    \item Configuring an application with classes dynamically.
+\end{enumerate}
+\subsection{Implementation}
+\begin{enumerate}
+    \item Using a prototype manager. When the number of prototypes in a system
+        isn't fixed, keep a registry of available prototypes. \emph{Clients
+            won't manage prototypes themselves but will store and retrieve them
+        from the registry.} A client will ask the registry for a prototype
+        before cloning it. We call this registry a \textbf{prototype manager}
+    \item Implementing the Clone operation.
+    \item Initializing clones.
+\end{enumerate}
 
 \end{document}
