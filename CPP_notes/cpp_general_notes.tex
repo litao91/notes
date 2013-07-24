@@ -119,7 +119,7 @@ floating-point numbers, or as characters.
 \subsection{volatile}
 The qualifier \verb|volatile| tells the compiler "You never know when this will
 change", and prevents the compiler from performing any optimizations based on
-teh stability of that variable. A \verb|volatile| variable is always read
+the stability of that variable. A \verb|volatile| variable is always read
 whenever its value is required, even if it was just read the line before.
 
 \section{Introduction to preprocessor macros}
@@ -405,8 +405,8 @@ Use the \verb|static|, means "there's only one instance, regardless of how many
 objects of the classes are created,". Thus, a \verb|static const| of built-in
 type can be treated as compile-time constant.
 
-You must provide the initializer at the point of definition of the \verb|static
-const|. (This is something that only occurs with the \verb|static const|).
+You must provide the initializer at the point of definition of the \verb|static const|. 
+(This is something that only occurs with the \verb|static const|).
 \subsection{const objects \& member functions}
 If you want to create a \verb|const| member function, and you'd still like to
 change some of the data in the object, you have two ways, the first way is
@@ -475,6 +475,7 @@ can be surprising and will definitely no mimic function behavior.
 \item A macro has no concept of the scoping required with member functions. The
 preprocessor simply performs text substitution.There is simply no way to express
 class scope in a macro.
+\end{itemize}
 \section{Inline functions}
 C++ implements the macro as \emph{inline function}, which is a true function in
 every sense.
@@ -499,7 +500,6 @@ Any function you define inside a class definition is automatically an inline.
 
 One of the most important uses of inlines inside classes is the \emph{access
 function}.
-\end{itemize}
 \section{Reducing clutters}
 Use the \verb|inline| keyword, instead of in place:
 \begin{verbatim}
@@ -570,7 +570,7 @@ array and another to hold the length of that array.
 \section{Static elements in C}
 In both C and C++ the keyword \verb|static| has two basic meanings:
 \begin{enumerate}
-\item Allocate once at a fixed address; that is, teh object is created in a
+\item Allocate once at a fixed address; that is, the object is created in a
 special \emph{static} data area rather than on the stack each time a function is
 called. This is the concept of \emph{static} storage.
 \item Local to a particular translation unit(and local to a class scope in C++).
@@ -626,6 +626,42 @@ static int a = 0;
 the storage exists elsewhere.
 \item With function names, \verb|static| and \verb|extern| can only alter
 visibility.
+\end{itemize}
+\section{Namespace}
+You can subdivide the global name space into more manageable pieces using the \emph{namespace} feature of C++. The \verb|namespace| keyword puts the names of its members in a distinct space. 
+
+Syntax:
+\begin{verbatim}
+//file: MyLib.cpp
+namespace MyLib{
+ //Declaractions;
+}
+int main() {}
+\end{verbatim}
+
+\begin{itemize}
+\item A namespace definition can appear only at global scope, or nested within another namespace.
+\item No terminating semicolon is necessary after the closing brace of a namespace definition.
+\item A namespace definition can be "continued" over multiple header files using a syntax that would appear to be a redefinition.
+\item A namespace can be \emph{aliased} to another name.
+\begin{verbatim}
+namespace BobsSuperDuperLibrary {
+  class Widget { /* ... */ };
+  class Poppit { /* ... */ };
+  // ...
+}
+// Too much to type! I’ll alias it:
+namespace Bob = BobsSuperDuperLibrary;
+int main() {} 
+\end{verbatim}
+\item You cannot create an instance of a namespace.
+\end{itemize}
+
+\subsection{Unnamed namespace}
+Each translation unit contains an unnamed namespace that you can add to by saying "namespace" without an identifier.
+
+The names in this space are automatically available in that translation unit without qualification. It is guarantee that \emph{an unnamed space is unique for each translation unit}.
+
 \chapter{Source Files and Programs}
 \section{Separate Compilation}
 A file is the tradition unit of compilation.
@@ -1196,7 +1232,7 @@ template <typename T>
 void fill (Array<T>*, T const& = T());  // T() is zero for built-in types 
 \end{verbatim}
 
-The latter declaraction shows that a default call argument could depend on a template parameter. When teh fill() function is called, the default argument is not instantiated if a second function call argument is supplied. This ensures that no error is issued if the defualt call argument cannot be instantiated for a particular T.
+The latter declaraction shows that a default call argument could depend on a template parameter. When the fill() function is called, the default argument is not instantiated if a second function call argument is supplied. This ensures that no error is issued if the defualt call argument cannot be instantiated for a particular T.
 
 Three other kinds of declaractions can be parameterized using a similar notation:
 \begin{enumerate}

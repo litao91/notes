@@ -1,0 +1,25 @@
+\contentsline {chapter}{\numberline {1}Divide and Conquer}{5}
+\contentsline {section}{\numberline {1.1}The Master Theorem}{5}
+\contentsline {section}{\numberline {1.2}Proof the master therom}{5}
+\contentsline {subsection}{\numberline {1.2.1}Proof for exact powers}{5}
+\contentsline {subsection}{\numberline {1.2.2}Floors and ceilings}{6}
+\contentsline {chapter}{\numberline {2}Red-Black Trees}{7}
+\contentsline {section}{\numberline {2.1}Properties of red-black trees}{7}
+\contentsline {section}{\numberline {2.2}Rotation}{7}
+\contentsline {section}{\numberline {2.3}Insertion}{8}
+\contentsline {paragraph}{Case 1: z's uncle y is red}{8}
+\contentsline {paragraph}{Case 2: z's uncle y is black and z is a right child \\ Case 3: z's uncle y is black and z is a left child}{9}
+\contentsline {chapter}{\numberline {3}Graph}{11}
+\contentsline {section}{\numberline {3.1}Minimum Spanning Trees}{11}
+\contentsline {subsection}{\numberline {3.1.1}Growing a minimum spanning tree}{11}
+\contentsline {subsection}{\numberline {3.1.2}The algorithm of Kruskal and Prim}{12}
+\contentsline {subsubsection}{Kruskal's algorithm}{12}
+\contentsline {subsubsection}{Prim's algorithm}{13}
+\contentsline {section}{\numberline {3.2}Single-Source Shortest Path}{13}
+\contentsline {subsection}{\numberline {3.2.1}The Bellman-Ford algorithm}{14}
+\contentsline {subsection}{\numberline {3.2.2}Single-source paths in directed acyclic graphs}{15}
+\contentsline {subsection}{\numberline {3.2.3}Dijkstra's algorithm}{16}
+\contentsline {section}{\numberline {3.3}All-Pairs Shortest Paths}{17}
+\contentsline {subsection}{\numberline {3.3.1}A recursive solution}{17}
+\contentsline {paragraph}{Note}{18}
+\contentsline {subsection}{\numberline {3.3.2}Computing the shortest-path weights bottom up}{18}

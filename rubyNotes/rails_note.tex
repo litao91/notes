@@ -1,0 +1,45 @@
+\documentclass[11pt, a4paper]{book}
+\usepackage{parskip}
+\usepackage[top=1.5cm, left=1cm, right=1cm, bottom=2.5cm]{geometry}
+\usepackage{fontspec}
+\usepackage{graphicx}
+\setmainfont{Roboto}
+\setmainfont{DejaVu Serif}
+\begin{Documents}
+\chapter{Ajax in Rails}
+\section{jQuery and the ajax() function}
+Here is a quick refresher on how jQuery itself handles 
+
+The special sauce that makes the asynchronous communication between the browser
+and the server possible is the \verb|XMLHttpRequest|(XHL) object.
+
+jQuery does this by means of the general utility funciton \verb|$.ajax()|.
+The \verb|$.ajax()| function takes a single parameter, an \verb|options|
+object. This object comprised of a set of key-value pairs for configuration. The
+more commonly used:
+\begin{enumerate}
+\item \verb|url||: where to send the request to
+\item \verb|type|: usually GET or POST
+\item \verb|dataType|: the format of the data we expect back from the server.
+Set the value of the "Accept" attribute in the HTTP request header object.
+\item Callback functions to hook into various stages of the request, such
+\verb|beforeSend|, \verb|complete|, \verb|error|, \verb|sucess|
+\end{enumerate}
+Also, \verb|$.get()|, \verb|$.getJcript()|, \verb|$.getJSON()|, \verb|$.post()|
+All of these mehtods call the \verb|$.ajax()| in the backgrounnd.
+\section{Rails and the jQuery UJS Adapter}
+Before UJS Adapter:
+\begin{verbatim}
+//Adds a comment from upon click
+$('a#add_comment').live('click', function(event) {
+    $.ajax({
+        url: $(this).href,
+        dataType:'script'
+    });
+    return false;
+})
+\end{verbatim}
+
+UJS adapter allows us to make exactly the same Ajax call with:
+
+\end{Documents}
